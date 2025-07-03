@@ -44,10 +44,13 @@ def parse(
     return tlib.ops.util._wrap_triton_constexpr(exprs_in, exprs_out)
 
 @tl.constexpr_function
-@tlib.ji
-def rearrange_stag3(out, x, y, z):
+@tlib.jit(
+    trace=lambda t, c: lambda exprs, tensors_in: c(
+        exprs, [t(v) for v in tensors_in if v is not None],
+    )
+)
+def rearrange_stag3(out, tensors_in):
     exprs_in, exprs_out = tlib.ops.util._unwrap_triton_constexpr(*out)
-    tensors_in = [tensor for tensor in [x, y, z] if tensor is not None]
 
     if len(exprs_in) != len(tensors_in):
         raise ValueError(f"Expected {len(exprs_in)} input tensor(s), got {len(tensors_in)}")
@@ -65,7 +68,6 @@ def rearrange_stag3(out, x, y, z):
     # tensors_in = backend.all_to_tensor(tensors_in, convert_scalars=True)
 
     import pdb; pdb.set_trace()
-    zz = x + y
 
 
 @triton.jit
@@ -83,7 +85,7 @@ def rearrange(
         tlib.tracer.get_shape(z),
         cse=cse
     )
-    x, y, z = rearrange_stag3(out, x, y, z)(x,y,z)
+    x, y, z = rearrange_stag3(out, (x, y, z))(x,y,z)
     # if tl.constexpr(y is None and z is None):
     #     return x
     # elif tl.constexpr(z is None):

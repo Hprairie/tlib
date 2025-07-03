@@ -49,7 +49,7 @@ from . import _triton
 
 # Create numpy backend now
 
-numpy = register(_numpy.create())
+numpy = register(_triton.create())
 
 
 # Check if any new modules have been imported and construct backends that have been

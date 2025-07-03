@@ -1,5 +1,20 @@
 import triton
 import triton.language as tl
+from triton.language import core
+from triton.language import 
+
+# Creation
+to_tensor = tl.tensor
+
+# Rearrange
+reshape = tl.reshape
+transpose = tl.trans
+broadcast_to = tl.broadcast_to
+arange = tl.arange
+
+# Cat/stack
+concatenate = tl.cat
+stack = tl.join
 
 # Elementwise
 @triton.jit
@@ -7,20 +22,24 @@ def add(x, y):
     return x + y
 
 @triton.jit
-def sub(x, y):
+def subtract(x, y):
     return x - y
 
 @triton.jit
-def mul(x, y):
+def multiply(x, y):
     return x * y
 
 @triton.jit
-def div(x, y):
+def true_divide(x, y):
     return x / y
 
 @triton.jit
 def floor_div(x, y):
     return x // y
+
+@triton.jit
+def divide(x, y):
+    return x / y
 
 @triton.jit
 def logical_and(x, y):
@@ -61,3 +80,12 @@ def maximum(x, y):
 @triton.jit
 def minimum(x, y):
     return min(x, y)
+
+# Reductions
+sum = tl.sum
+
+
+@triton.jit
+def mean(input, axis=None, keep_dims=False, dtype: core.constexpr | None = None):
+    total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
+    return input.to(total)
