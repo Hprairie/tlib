@@ -1,6 +1,10 @@
 import triton_lib as tlib
 import numpy as np
 
+import triton.language as tl
+
+from typing import Any
+
 
 def flatten(exprs, tensors=None, backend=None):
     if tensors is None:
@@ -211,6 +215,14 @@ def _clean_parameter(v):
     """Clean v into an integer type"""
     return int(v)
 
+def _wrap_triton_constexpr(*args):
+    """Wraps into triton constexpr"""
+    return (tl.constexpr(arg) for arg in args)
+
+def _unwrap_triton_constexpr(*args):
+    """Unwraps triton constexpr"""
+    return tuple([arg.value for arg in args])
+
 
 def _clean_description(description):
     # Remove parameters that are not used in the description
@@ -218,13 +230,17 @@ def _clean_description(description):
         split = description.split("|")
         assert len(split) == 2, "Too many parameter brackets being passed to tlib."
         description, parameters = split
+    else:
+        description, parameters = description, None
 
     axis_names = {
         axis.name
         for axis in tlib.expr.stage1.parse_op(description).all()
         if isinstance(axis, tlib.expr.stage1.NamedAxis)
     }
-    exprs = [param.split("=") for param in parameters.split(",")]
+    exprs = []
+    if parameters is not None:
+        exprs = [param.split("=") for param in parameters.split(",")]
     # TODO: Check typing on this
     parameters = {k: _clean_parameter(v) for k, v in exprs if k in axis_names}
 

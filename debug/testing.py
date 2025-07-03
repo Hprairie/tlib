@@ -3,6 +3,8 @@ import triton
 import triton.language as tl
 from typing import Union, List
 
+import triton_lib as tlib
+
 
 @triton.jit
 def add(x):
@@ -32,10 +34,10 @@ def my_kernel(
     o_ptr,
     LENGHT: tl.constexpr,
 ):
-    x = tl.load(x_ptr + tl.arange(0, LENGHT))
+    x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
     # x = rearrange("-", x)
-    x = rearrange("+", x=x, y=x)
-    tl.store(o_ptr + tl.arange(0, LENGHT), x)
+    x = tlib.rearrange("a b -> b a", x)
+    tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)
 
 def launch(x):
     o = torch.zeros_like(x)
@@ -43,6 +45,7 @@ def launch(x):
     return o
 
 x = torch.arange(8).to("cuda")
+x = x[:, None] * x[None, :]
 o = launch(x)
 print(o)
 
