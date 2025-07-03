@@ -1,0 +1,1 @@
+from .tensor import get_shape
