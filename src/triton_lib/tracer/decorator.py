@@ -192,7 +192,7 @@ def jit(func=None, trace=trace_all):
     @functools.wraps(func)
     def func_jit(*args, backend=None, graph=False, **kwargs):
         if _is_tracing():
-            assert not graph
+            assert not g
             if backend is None:
                 backend = _get_trace_stack()[-1].backend
             elif backend != _get_trace_stack()[-1].backend:

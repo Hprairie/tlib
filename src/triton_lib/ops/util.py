@@ -223,6 +223,10 @@ def _unwrap_triton_constexpr(*args):
     """Unwraps triton constexpr"""
     return tuple([arg.value for arg in args])
 
+@tl.constexpr_function
+def count_tensors(x, y, z):
+    return len([v for v in [x, y, z] if v is not None])
+
 
 def _clean_description(description):
     # Remove parameters that are not used in the description

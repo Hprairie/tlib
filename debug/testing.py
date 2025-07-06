@@ -29,6 +29,10 @@ def rearrange(
     return function(query)(x)
 
 @triton.jit
+def list_work(x):
+    return [x, x]
+
+@triton.jit
 def my_kernel(
     x_ptr,
     o_ptr,
@@ -36,6 +40,7 @@ def my_kernel(
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
     # x = rearrange("-", x)
+    # x, x2 = list_work(x)
     x = tlib.rearrange("a b -> b a", x)
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)
 
@@ -45,7 +50,7 @@ def launch(x):
     return o
 
 x = torch.arange(8).to("cuda")
-x = x[:, None] * x[None, :]
+x = x[:, None] * 8 + x[None, :]
 o = launch(x)
 print(o)
 

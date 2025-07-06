@@ -45,11 +45,12 @@ def parse(
 
 @tl.constexpr_function
 @tlib.jit(
-    trace=lambda t, c: lambda exprs, tensors_in: c(
-        exprs, [t(v) for v in tensors_in if v is not None],
+    trace=lambda t, c: lambda exprs, x, y, z: c(
+        exprs, *(t(arg) if arg is not None else None for arg in [x, y, z])
     )
 )
-def rearrange_stag3(out, tensors_in):
+def rearrange_stage3(out, x, y, z, backend=None):
+    tensors_in = [v for v in [x,y,z] if v is not None]
     exprs_in, exprs_out = tlib.ops.util._unwrap_triton_constexpr(*out)
 
     if len(exprs_in) != len(tensors_in):
@@ -67,7 +68,34 @@ def rearrange_stag3(out, tensors_in):
     ]
     # tensors_in = backend.all_to_tensor(tensors_in, convert_scalars=True)
 
-    import pdb; pdb.set_trace()
+    exprs_in, tensors_in = tlib.ops.util.flatten(exprs_in, tensors_in, backend=backend)
+    exprs_out_flat = tlib.ops.util.flatten(exprs_out)
+    assert all(tlib.expr.stage3.is_flat(expr) for expr in exprs_in)
+    assert all(tlib.expr.stage3.is_flat(expr) for expr in exprs_out_flat)
+    if len(exprs_in) != len(exprs_out_flat):
+        raise ValueError(
+            f"Got different number of input ({len(exprs_in)}) and output expressions "
+            f"({len(exprs_out_flat)}) (after flattening)"
+        )  # TODO:
+
+    # Order inputs to align with output expressions
+    indices = tlib.ops.util.assignment(exprs_in, exprs_out_flat)
+    exprs_in = [exprs_in[i] for i in indices]
+    tensors_in = [tensors_in[i] for i in indices]
+
+    # Transpose and broadcast missing output dimensions
+    tensors = [
+        tlib.ops.util.transpose_broadcast(expr_in, tensor, expr_out, backend=backend)[0]
+        for expr_in, tensor, expr_out in zip(exprs_in, tensors_in, exprs_out_flat)
+    ]
+
+    # Unflatten output expressions
+    tensors = tlib.ops.util.unflatten(exprs_out_flat, tensors, exprs_out, backend=backend)
+
+    return tensors
+
+
+
 
 
 @triton.jit
@@ -85,10 +113,11 @@ def rearrange(
         tlib.tracer.get_shape(z),
         cse=cse
     )
-    x, y, z = rearrange_stag3(out, (x, y, z))(x,y,z)
-    # if tl.constexpr(y is None and z is None):
-    #     return x
-    # elif tl.constexpr(z is None):
-    #     return x, y
-    # else:
-    #     return x, y, z
+
+    func: tl.constexpr = rearrange_stage3(out, x, y, z)
+    if tl.constexpr(y is None and z is None):
+        return func(x)[0]
+    elif tl.constexpr(z is None):
+        return func(x, y)
+    else:
+        return func(x, y, z)

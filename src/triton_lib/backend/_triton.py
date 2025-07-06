@@ -9,10 +9,10 @@ from functools import partial
 
 
 def create():
-    ttl = tracer.import_("triton.language", "tl")
+    ttl = tracer.import_("triton_lib.functional.base", "tlib")
 
-    class numpy(Backend):
-        name = "numpy"
+    class triton(Backend):
+        name = "triton"
         tensor_types = [tl.tensor, int, float, bool]
         _get_tests = staticmethod(_get_tests)
 
@@ -26,47 +26,47 @@ def create():
             )
 
         reshape = op.reshape(ttl.reshape)
-        transpose = op.transpose(ttl.trans)
+        transpose = op.transpose(ttl.transpose)
         broadcast_to = op.broadcast_to(ttl.broadcast_to)
-        # einsum = op.einsum(tnp.einsum)
+        # einsum = op.einsum(ttl.einsum)
         arange = op.arange(ttl.arange)
 
         # stack = op.stack(ttl.stack)
         concatenate = op.concatenate(ttl.cat)
 
         add = associative_binary_to_nary(op.elementwise(ttl.add))
-        subtract = op.elementwise(tnp.subtract)
-        multiply = associative_binary_to_nary(op.elementwise(tnp.multiply))
-        true_divide = op.elementwise(tnp.true_divide)
-        floor_divide = op.elementwise(tnp.floor_divide)
-        divide = op.elementwise(tnp.divide)
-        logical_and = associative_binary_to_nary(op.elementwise(tnp.logical_and))
-        logical_or = associative_binary_to_nary(op.elementwise(tnp.logical_or))
-        where = op.elementwise(tnp.where)
-        less = op.elementwise(tnp.less)
-        less_equal = op.elementwise(tnp.less_equal)
-        greater = op.elementwise(tnp.greater)
-        greater_equal = op.elementwise(tnp.greater_equal)
-        equal = op.elementwise(tnp.equal)
-        not_equal = op.elementwise(tnp.not_equal)
-        maximum = associative_binary_to_nary(op.elementwise(tnp.maximum))
-        minimum = associative_binary_to_nary(op.elementwise(tnp.minimum))
+        subtract = op.elementwise(ttl.subtract)
+        multiply = associative_binary_to_nary(op.elementwise(ttl.multiply))
+        true_divide = op.elementwise(ttl.true_divide)
+        floor_divide = op.elementwise(ttl.floor_divide)
+        divide = op.elementwise(ttl.divide)
+        logical_and = associative_binary_to_nary(op.elementwise(ttl.logical_and))
+        logical_or = associative_binary_to_nary(op.elementwise(ttl.logical_or))
+        where = op.elementwise(ttl.where)
+        less = op.elementwise(ttl.less)
+        less_equal = op.elementwise(ttl.less_equal)
+        greater = op.elementwise(ttl.greater)
+        greater_equal = op.elementwise(ttl.greater_equal)
+        equal = op.elementwise(ttl.equal)
+        not_equal = op.elementwise(ttl.not_equal)
+        maximum = associative_binary_to_nary(op.elementwise(ttl.maximum))
+        minimum = associative_binary_to_nary(op.elementwise(ttl.minimum))
 
-        sum = op.reduce(tnp.sum)
-        mean = op.reduce(tnp.mean)
-        var = op.reduce(tnp.var)
-        std = op.reduce(tnp.std)
-        prod = op.reduce(tnp.prod)
-        count_nonzero = op.reduce(tnp.count_nonzero)
-        any = op.reduce(tnp.any)
-        all = op.reduce(tnp.all)
-        min = op.reduce(tnp.min)
-        max = op.reduce(tnp.max)
+        sum = op.reduce(ttl.sum)
+        mean = op.reduce(ttl.mean)
+        var = op.reduce(ttl.var)
+        std = op.reduce(ttl.std)
+        prod = op.reduce(ttl.prod)
+        count_nonzero = op.reduce(ttl.count_nonzero)
+        any = op.reduce(ttl.any)
+        all = op.reduce(ttl.all)
+        min = op.reduce(ttl.min)
+        max = op.reduce(ttl.max)
 
-        log = op.elementwise(tnp.log)
-        exp = op.elementwise(tnp.exp)
-        sqrt = op.elementwise(tnp.sqrt)
-        square = op.elementwise(tnp.square)
+        log = op.elementwise(ttl.log)
+        exp = op.elementwise(ttl.exp)
+        sqrt = op.elementwise(ttl.sqrt)
+        square = op.elementwise(ttl.square)
 
         @staticmethod
         @tlib.trace
@@ -92,10 +92,10 @@ def create():
                 coordinates, tensor.__getitem__(coordinates).__isub__(updates)
             )
 
-        flip = op.keep_shape(tnp.flip)
-        roll = op.keep_shape(tnp.roll)
+        flip = op.keep_shape(ttl.flip)
+        roll = op.keep_shape(ttl.roll)
 
-    return numpy()
+    return triton()
 
 
 def _get_tests():

@@ -3,6 +3,8 @@ from .tracer import *
 from .tensor import *
 from .optimize import optimize
 from functools import partial
+import os
+import tempfile
 
 
 class Variables:
@@ -180,7 +182,20 @@ class CodeObject:
             self.code = line + "\n" + self.code
 
         locals_globals = {definition.name: definition.value for definition in self.constants}
-        exec(self.code, locals_globals, locals_globals)
+        # import pdb; pdb.set_trace()
+        # exec(self.code, locals_globals, locals_globals)
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+            temp_file.write(self.code)
+            temp_file_path = temp_file.name
+
+        try:
+            # Execute the file
+            exec(compile(open(temp_file_path).read(), temp_file_path, 'exec'), locals_globals, locals_globals)
+            self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
+        finally:
+            # Clean up the temporary file
+            # os.unlink(temp_file_path)
+            pass
         self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
 
     def __str__(self):
@@ -430,6 +445,8 @@ class CodeObject:
             # Define function body
             output_def = self.get_definition_of(x.output)
 
+            block.code.append(f"import triton")
+            block.code.append(f"@triton.jit")
             block.code.append(f"def {definition.name}({', '.join(argnames)}):")
             block.code.append(function_block)
             block.code.append(f"    return {output_def.code}")
@@ -499,7 +516,7 @@ class CompiledFunction:
 
     def __call__(self, *input_concrete):
         # TODO: assert that input_concrete are compatible with function.input?
-        return self.op(*input_concrete)
+        return self.op # We return a jitted function and then call it from within another jitted function
 
     def __str__(self):
         return self.code
