@@ -63,13 +63,14 @@ def _with_retrace_warning(func):
                     # Generate string description of call stack
                     trace = ""
                     for frame in reversed(stack):
-                        trace += (
-                            f'File "{frame.filename}", line {frame.lineno}, in {frame.function}\n'
-                        )
+                        trace += f'File "{frame.filename}", line {frame.lineno}, in {frame.function}\n'
                         if frame.code_context is not None:
                             trace += f"  {frame.code_context[0].strip()}\n"
                     cache_failures[trace] += 1
-                    if thread_local.warn and cache_failures[trace] == warn_on_retrace_num:
+                    if (
+                        thread_local.warn
+                        and cache_failures[trace] == warn_on_retrace_num
+                    ):
                         # Print warning
                         has_warned = True
                         print(
@@ -102,7 +103,9 @@ def lru_cache(func):
     func = _with_retrace_warning(func)
 
     if max_cache_size > 0:
-        func = functools.lru_cache(maxsize=max_cache_size if max_cache_size > 0 else None)(func)
+        func = functools.lru_cache(
+            maxsize=max_cache_size if max_cache_size > 0 else None
+        )(func)
     elif max_cache_size < 0:
         if "cache" in vars(functools):
             func = functools.cache(func)
@@ -192,7 +195,7 @@ def jit(func=None, trace=trace_all):
     @functools.wraps(func)
     def func_jit(*args, backend=None, graph=False, **kwargs):
         if _is_tracing():
-            assert not g
+            assert not graph
             if backend is None:
                 backend = _get_trace_stack()[-1].backend
             elif backend != _get_trace_stack()[-1].backend:
@@ -211,17 +214,27 @@ def jit(func=None, trace=trace_all):
                 traced_input_values.append(value)
             return key
 
-        args, kwargs = trace(new_input, lambda *args, **kwargs: (args, kwargs))(*args, **kwargs)
+        args, kwargs = trace(new_input, lambda *args, **kwargs: (args, kwargs))(
+            *args, **kwargs
+        )
 
         # Disable torch.compile for graph construction (if torch is imported)
         nonlocal has_decorated, find_backend_and_construct_graph
-        if not has_decorated and "torch" in sys.modules and "_dynamo" in dir(sys.modules["torch"]):
+        if (
+            not has_decorated
+            and "torch" in sys.modules
+            and "_dynamo" in dir(sys.modules["torch"])
+        ):
             import torch._dynamo as _dynamo
 
-            find_backend_and_construct_graph = _dynamo.disable(find_backend_and_construct_graph)
+            find_backend_and_construct_graph = _dynamo.disable(
+                find_backend_and_construct_graph
+            )
             has_decorated = True
 
-        graph = find_backend_and_construct_graph(args, kwargs, traced_input_values, backend)
+        graph = find_backend_and_construct_graph(
+            args, kwargs, traced_input_values, backend
+        )
 
         # Execute/ return graph
         if return_graph:

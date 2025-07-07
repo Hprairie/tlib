@@ -13,9 +13,10 @@ from . import traceback_util
 from . import tree_util
 from . import backend
 from . import ops
+
 # from .types import *
 from . import expr
-from .ops.rearrange import rearrange
+from .ops import *
 
 SyntaxError = expr.SyntaxError
 DimensionError = expr.DimensionError

@@ -24,8 +24,7 @@ import triton.language as tl
 import triton_lib as tlib
 
 @triton.jit
-def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr,
-):
+def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
     x = tlib.rearrange("a b -> b a", x) # This is equivalent to transpose in triton
 ```

@@ -19,7 +19,9 @@ class Variables:
         return Variables(parent=self)
 
     def __contains__(self, name):
-        return name in self.variables or (self.parent is not None and name in self.parent)
+        return name in self.variables or (
+            self.parent is not None and name in self.parent
+        )
 
     def _is_free(self, name):
         if name in self.variables:
@@ -171,7 +173,9 @@ class CodeObject:
         self.definitions = {}  # obj-id: Definition
         self.constants = []
         self.usages = Usages(objects)
-        self.names = tlib.tree_util.tree_map(lambda x: self.get_definition_of(x).name, objects)
+        self.names = tlib.tree_util.tree_map(
+            lambda x: self.get_definition_of(x).name, objects
+        )
         self.code = str(self.root_block)
 
         for definition in self.constants:
@@ -181,22 +185,34 @@ class CodeObject:
                 line += f" = {value_str}"
             self.code = line + "\n" + self.code
 
-        locals_globals = {definition.name: definition.value for definition in self.constants}
+        locals_globals = {
+            definition.name: definition.value for definition in self.constants
+        }
         # import pdb; pdb.set_trace()
         # exec(self.code, locals_globals, locals_globals)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".py", delete=False
+        ) as temp_file:
             temp_file.write(self.code)
             temp_file_path = temp_file.name
 
         try:
             # Execute the file
-            exec(compile(open(temp_file_path).read(), temp_file_path, 'exec'), locals_globals, locals_globals)
-            self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
+            exec(
+                compile(open(temp_file_path).read(), temp_file_path, "exec"),
+                locals_globals,
+                locals_globals,
+            )
+            self.output = tlib.tree_util.tree_map(
+                lambda name: locals_globals[name], self.names
+            )
         finally:
             # Clean up the temporary file
             # os.unlink(temp_file_path)
             pass
-        self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
+        self.output = tlib.tree_util.tree_map(
+            lambda name: locals_globals[name], self.names
+        )
 
     def __str__(self):
         return self.code
@@ -220,7 +236,9 @@ class CodeObject:
     def execute_application(self, application):
         assert isinstance(application, Application)
 
-        comment = f"  # {application.comment}" if application.comment is not None else ""
+        comment = (
+            f"  # {application.comment}" if application.comment is not None else ""
+        )
 
         # Find block at which to execute the application (i.e. where all dependencies are defined)
         in_defs = [self.get_definition_of(x) for x in application.dependencies]
@@ -269,7 +287,9 @@ class CodeObject:
                 arg1 = self.get_definition_of(application.args[1]).code
                 right_str = f"({arg0} {op} {arg1})"
             else:
-                raise ValueError(f"Invalid number of arguments for operator '{application.op.op}'")
+                raise ValueError(
+                    f"Invalid number of arguments for operator '{application.op.op}'"
+                )
         elif isinstance(application.op, AssignAt):
             obj = self.get_definition_of(application.args[0]).code
             key = self.get_definition_of(application.args[1]).code
@@ -305,7 +325,8 @@ class CodeObject:
         else:
             op = self.get_definition_of(application.op).code
             args = [self.get_definition_of(arg).code for arg in application.args] + [
-                f"{k}={self.get_definition_of(v).code}" for k, v in application.kwargs.items()
+                f"{k}={self.get_definition_of(v).code}"
+                for k, v in application.kwargs.items()
             ]
             args = f"{', '.join(args)}"
             right_str = f"{op}({args})"
@@ -335,10 +356,13 @@ class CodeObject:
                 # Output: Unwrap list or tuple of tracers
                 assert not inplace
                 output_defs = [
-                    self.new_variable_definition(x, block, prefix="x") for x in application.output
+                    self.new_variable_definition(x, block, prefix="x")
+                    for x in application.output
                 ]
                 left_str = " ".join([d.name + "," for d in output_defs])
-                block.code.append(f"{left_str} = {_remove_parentheses(right_str)}" + comment)
+                block.code.append(
+                    f"{left_str} = {_remove_parentheses(right_str)}" + comment
+                )
             elif inplace:
                 # Output: Same existing variable
                 for tensor_in, tensor_out in application.inplace_updates:
@@ -353,8 +377,12 @@ class CodeObject:
                 block.code.append(_remove_parentheses(right_str) + comment)
             else:
                 # Output: Single new variable for pytree of tracers
-                left_str = self.new_variable_definition(application.output, block, prefix="x").name
-                block.code.append(f"{left_str} = {_remove_parentheses(right_str)}" + comment)
+                left_str = self.new_variable_definition(
+                    application.output, block, prefix="x"
+                ).name
+                block.code.append(
+                    f"{left_str} = {_remove_parentheses(right_str)}" + comment
+                )
 
         if use_dynamic_output_check:
 
@@ -403,7 +431,9 @@ class CodeObject:
         return definition
 
     def new_empty_definition(self, value, block):
-        definition = Definition(value, block, "!!!")  # This should never appear in the final code
+        definition = Definition(
+            value, block, "!!!"
+        )  # This should never appear in the final code
         self._add_definition(definition)
         return definition
 
@@ -434,7 +464,8 @@ class CodeObject:
 
             # Define parameters
             arg_defs = [
-                self.new_variable_definition(arg, function_block, prefix="i") for arg in x.args
+                self.new_variable_definition(arg, function_block, prefix="i")
+                for arg in x.args
             ]  # TODO: not using kwargs
             [
                 self.new_empty_definition(virtual_arg, function_block)
@@ -470,7 +501,12 @@ class CodeObject:
             return Definition(x, self.root_block, f'"{x}"')
         elif isinstance(x, tuple):
             x_defs = [self.get_definition_of(a) for a in x]
-            code = "(" + ", ".join([d.code for d in x_defs]) + ("," if len(x) == 1 else "") + ")"
+            code = (
+                "("
+                + ", ".join([d.code for d in x_defs])
+                + ("," if len(x) == 1 else "")
+                + ")"
+            )
             return Definition(x, self.join_blocks([d.block for d in x_defs]), code)
         elif isinstance(x, list):
             x_defs = [self.get_definition_of(a) for a in x]
@@ -479,7 +515,9 @@ class CodeObject:
         elif isinstance(x, dict):
             x_defs = {k: self.get_definition_of(v) for k, v in x.items()}
             code = "{" + ", ".join(f'"{k}": {v.code}' for k, v in x_defs.items()) + "}"
-            return Definition(x, self.join_blocks([v.block for v in x_defs.values()]), code)
+            return Definition(
+                x, self.join_blocks([v.block for v in x_defs.values()]), code
+            )
         elif isinstance(x, (int, float, np.integer, np.floating)):
             return Definition(x, self.root_block, str(x))
         elif isinstance(x, slice):
@@ -501,7 +539,9 @@ class CodeObject:
             return Definition(x, self.root_block, "None")
         else:
             # Constant
-            definition = self.new_variable_definition(x, self.root_block, prefix="const")
+            definition = self.new_variable_definition(
+                x, self.root_block, prefix="const"
+            )
             self.constants.append(definition)
             return definition
 
@@ -516,7 +556,9 @@ class CompiledFunction:
 
     def __call__(self, *input_concrete):
         # TODO: assert that input_concrete are compatible with function.input?
-        return self.op # We return a jitted function and then call it from within another jitted function
+        return (
+            self.op
+        )  # We return a jitted function and then call it from within another jitted function
 
     def __str__(self):
         return self.code
