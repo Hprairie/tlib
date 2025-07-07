@@ -19,12 +19,13 @@ def my_kernel(
     #     x,
     # )
     # x = tlib.reduce("[a] b", x, "sum")
-    x = tlib.sum("[a] b", x)
+    x = tlib.var("[a] b", x)
     tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
 
 def launch(x):
     o = torch.zeros_like(x)
+    print(x)
     my_kernel[(1, 1, 1)](x, o, x.shape[0])
     return o
 

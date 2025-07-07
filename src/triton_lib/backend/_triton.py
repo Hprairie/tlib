@@ -31,7 +31,7 @@ def create():
         # einsum = op.einsum(ttl.einsum)
         arange = op.arange(ttl.arange)
 
-        # stack = op.stack(ttl.stack)
+        stack = op.stack(ttl.stack)
         concatenate = op.concatenate(ttl.cat)
 
         add = associative_binary_to_nary(op.elementwise(ttl.add))
@@ -100,7 +100,9 @@ def create():
 
 def _get_tests():
     test = types.SimpleNamespace(
-        full=lambda shape, value=0.0, dtype="float32": tl.full(shape, value, dtype=dtype),
+        full=lambda shape, value=0.0, dtype="float32": tl.full(
+            shape, value, dtype=dtype
+        ),
         # to_tensor=tl.asarray,
         # to_numpy=lambda x: x,
     )

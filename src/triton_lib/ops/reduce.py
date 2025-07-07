@@ -200,84 +200,72 @@ def sum(
     )
 
 
-# def sum_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="sum", **kwargs)
+@triton.jit
+def mean(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="mean"``"""
+    return reduce(
+        description,
+        tensor,
+        op="mean",
+        keepdims=keepdims,
+        cse=cse,
+    )
 
 
-# @tlib.traceback_util.filter
-# def mean(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="mean"``"""
-#     return reduce(
-#         description, tensor, op="mean", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
+@triton.jit
+def var(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="var"``"""
+    return reduce(
+        description,
+        tensor,
+        op="var",
+        keepdims=keepdims,
+        cse=cse,
+    )
 
 
-# def mean_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="mean", **kwargs)
+@triton.jit
+def std(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="std"``"""
+    return reduce(
+        description,
+        tensor,
+        op="std",
+        keepdims=keepdims,
+        cse=cse,
+    )
 
 
-# @tlib.traceback_util.filter
-# def var(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="var"``"""
-#     return reduce(
-#         description, tensor, op="var", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
-
-
-# def var_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="var", **kwargs)
-
-
-# @tlib.traceback_util.filter
-# def std(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="std"``"""
-#     return reduce(
-#         description, tensor, op="std", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
-
-
-# def std_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="std", **kwargs)
-
-
-# @tlib.traceback_util.filter
-# def prod(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="prod"``"""
-#     return reduce(
-#         description, tensor, op="prod", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
-
-
-# def prod_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="prod", **kwargs)
+@triton.jit
+def prod(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="prod"``"""
+    return reduce(
+        description,
+        tensor,
+        op="prod",
+        keepdims=keepdims,
+        cse=cse,
+    )
 
 
 # @tlib.traceback_util.filter
