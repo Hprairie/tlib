@@ -209,6 +209,7 @@ def reduce(
 def sum(
     description: tl.constexpr,
     tensor: tl.tensor,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -217,6 +218,7 @@ def sum(
         description,
         tensor,
         op="sum",
+        mask=mask,
         keepdims=keepdims,
         cse=cse,
     )
@@ -226,6 +228,7 @@ def sum(
 def mean(
     description: tl.constexpr,
     tensor: tl.tensor,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -234,6 +237,7 @@ def mean(
         description,
         tensor,
         op="mean",
+        mask=mask,
         keepdims=keepdims,
         cse=cse,
     )
@@ -243,6 +247,7 @@ def mean(
 def var(
     description: tl.constexpr,
     tensor: tl.tensor,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -251,6 +256,7 @@ def var(
         description,
         tensor,
         op="var",
+        mask=mask,
         keepdims=keepdims,
         cse=cse,
     )
@@ -260,6 +266,7 @@ def var(
 def std(
     description: tl.constexpr,
     tensor: tl.tensor,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -268,6 +275,7 @@ def std(
         description,
         tensor,
         op="std",
+        mask=mask,
         keepdims=keepdims,
         cse=cse,
     )
@@ -277,6 +285,7 @@ def std(
 def prod(
     description: tl.constexpr,
     tensor: tl.tensor,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -285,6 +294,7 @@ def prod(
         description,
         tensor,
         op="prod",
+        mask=mask,
         keepdims=keepdims,
         cse=cse,
     )

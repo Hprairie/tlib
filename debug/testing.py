@@ -10,17 +10,15 @@ def my_kernel(
     o_ptr,
     LENGHT: tl.constexpr,
 ):
-    x = tl.load(
-        x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :]
-    )
+    x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
     # x = tlib.rearrange("a b -> b a", x)
     # tl.store(
     #     o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :],
     #     x,
     # )
     # x = tlib.reduce("[a] b", x, "sum", mask=tl.arange(0, LENGHT) < (LENGHT // 2))
-    x = tlib.reduce("[a] b", x, "sum")
-    # x = tlib.var("[a] b", x)
+    # x = tlib.reduce("[a] b", x, "sum")
+    x = tlib.std("[a] b", x)
     tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
 

@@ -1,3 +1,5 @@
+import builtins
+
 import triton
 import triton.language as tl
 from triton.language import core
@@ -98,6 +100,11 @@ def minimum(x, y):
 
 
 # Reductions
+@tl.constexpr_function
+def _count_shape_dims(vals):
+    return builtins.sum(vals) if isinstance(vals, list) else vals
+
+
 @triton.jit
 def sum(
     input,
@@ -107,9 +114,7 @@ def sum(
     dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.sum(
-            tl.where(mask, input, 0.0), axis=axis, keep_dims=keep_dims, dtype=dtype
-        )
+        return tl.sum(tl.where(mask, input, 0.0), axis=axis, keep_dims=keep_dims, dtype=dtype)
     else:
         return tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
 
@@ -122,8 +127,12 @@ def mean(
     keep_dims=False,
     dtype: core.constexpr | None = None,
 ):
-    total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
-    return total / input.shape[axis]
+    if tl.constexpr(mask is not None):
+        total = sum(input, axis=axis, mask=mask, keep_dims=keep_dims, dtype=dtype)
+        return total / tl.sum(mask, keep_dims=keep_dims, dtype=dtype)
+    else:
+        total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
+        return total / _count_shape_dims(input.shape[axis])
 
 
 @triton.jit
@@ -134,13 +143,17 @@ def var(
     keep_dims=False,
     dtype: core.constexpr | None = None,
 ):
-    mean_val = mean(input, axis=axis, keep_dims=True, dtype=dtype)
-    norm = input - mean_val
-    total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)
-    return total / input.shape[axis]
+    mean_val = mean(input, axis=axis, mask=mask, keep_dims=True, dtype=dtype)
+    if tl.constexpr(mask is not None):
+        norm = tl.where(mask, input - mean_val, 0)
+        total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)
+        return total / tl.sum(mask, keep_dims=keep_dims, dtype=dtype)
+    else:
+        norm = input - mean_val
+        total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)
+        return total / _count_shape_dims(input.shape[axis])
 
 
 @triton.jit
 def std(input, axis=None, keep_dims=False, dtype: core.constexpr | None = None):
-    total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
-    return input.to(total)
+    return tl.sqrt(var(input, axis=axis, keep_dims=keep_dims, dtype=dtype))  # A little crude but oh well
