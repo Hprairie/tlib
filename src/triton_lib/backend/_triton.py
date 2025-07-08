@@ -81,18 +81,18 @@ def create():
         def set_at(tensor, coordinates, updates):
             return tensor.__setitem__(coordinates, updates)
 
-        @staticmethod
-        @tlib.trace
-        def add_at(tensor, coordinates, updates):
-            return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__iadd__(updates))
+        # @staticmethod
+        # @tlib.trace
+        # def add_at(tensor, coordinates, updates):
+        #     return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__iadd__(updates))
 
-        @staticmethod
-        @tlib.trace
-        def subtract_at(tensor, coordinates, updates):
-            return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__isub__(updates))
+        # @staticmethod
+        # @tlib.trace
+        # def subtract_at(tensor, coordinates, updates):
+        #     return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__isub__(updates))
 
         flip = op.keep_shape(ttl.flip)
-        roll = op.keep_shape(ttl.roll)
+        # roll = op.keep_shape(ttl.roll)
 
     return triton()
 

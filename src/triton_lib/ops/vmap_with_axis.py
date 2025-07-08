@@ -245,6 +245,7 @@ def vmap_with_axis(
     tensor: tl.tensor,
     op: tl.constexpr,
     mask: tl.tensor | None = None,
+    reverse: tl.constexpr | None = None,  # For non commutative operations
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     """Applies a function to the marked axes of the input tensors by passing the ``axis``
