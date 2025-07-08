@@ -20,7 +20,7 @@ def create():
         @tlib.trace
         def to_tensor(tensor, shape):
             return tlib.tracer.apply(
-                ttl.tensor,
+                ttl.to_tensor,
                 args=[tensor],
                 output=tlib.tracer.Tensor(shape),
             )
@@ -62,6 +62,8 @@ def create():
         all = op.reduce(ttl.all)
         min = op.reduce(ttl.min)
         max = op.reduce(ttl.max)
+        argmin = op.reduce(ttl.argmin)
+        argmax = op.reduce(ttl.argmax)
 
         log = op.elementwise(ttl.log)
         exp = op.elementwise(ttl.exp)
@@ -81,16 +83,12 @@ def create():
         @staticmethod
         @tlib.trace
         def add_at(tensor, coordinates, updates):
-            return tensor.__setitem__(
-                coordinates, tensor.__getitem__(coordinates).__iadd__(updates)
-            )
+            return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__iadd__(updates))
 
         @staticmethod
         @tlib.trace
         def subtract_at(tensor, coordinates, updates):
-            return tensor.__setitem__(
-                coordinates, tensor.__getitem__(coordinates).__isub__(updates)
-            )
+            return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__isub__(updates))
 
         flip = op.keep_shape(ttl.flip)
         roll = op.keep_shape(ttl.roll)
@@ -100,9 +98,7 @@ def create():
 
 def _get_tests():
     test = types.SimpleNamespace(
-        full=lambda shape, value=0.0, dtype="float32": tl.full(
-            shape, value, dtype=dtype
-        ),
+        full=lambda shape, value=0.0, dtype="float32": tl.full(shape, value, dtype=dtype),
         # to_tensor=tl.asarray,
         # to_numpy=lambda x: x,
     )

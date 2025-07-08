@@ -5,7 +5,7 @@ import triton.language as tl
 from triton.language import core
 
 # Creation
-to_tensor = tl.tensor
+to_tensor = core.to_tensor
 
 # Rearrange
 reshape = tl.reshape
@@ -106,13 +106,7 @@ def _count_shape_dims(vals):
 
 
 @triton.jit
-def sum(
-    input,
-    axis=None,
-    mask=None,
-    keep_dims=False,
-    dtype: core.constexpr | None = None,
-):
+def sum(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
     if tl.constexpr(mask is not None):
         return tl.sum(tl.where(mask, input, 0.0), axis=axis, keep_dims=keep_dims, dtype=dtype)
     else:
@@ -120,13 +114,7 @@ def sum(
 
 
 @triton.jit
-def mean(
-    input,
-    axis=None,
-    mask=None,
-    keep_dims=False,
-    dtype: core.constexpr | None = None,
-):
+def mean(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
     if tl.constexpr(mask is not None):
         total = sum(input, axis=axis, mask=mask, keep_dims=keep_dims, dtype=dtype)
         return total / tl.sum(mask, keep_dims=keep_dims, dtype=dtype)
@@ -136,13 +124,7 @@ def mean(
 
 
 @triton.jit
-def var(
-    input,
-    axis=None,
-    mask=None,
-    keep_dims=False,
-    dtype: core.constexpr | None = None,
-):
+def var(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
     mean_val = mean(input, axis=axis, mask=mask, keep_dims=True, dtype=dtype)
     if tl.constexpr(mask is not None):
         norm = tl.where(mask, input - mean_val, 0)
@@ -155,5 +137,88 @@ def var(
 
 
 @triton.jit
-def std(input, axis=None, keep_dims=False, dtype: core.constexpr | None = None):
-    return tl.sqrt(var(input, axis=axis, keep_dims=keep_dims, dtype=dtype))  # A little crude but oh well
+def std(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    return tl.sqrt(var(input, axis=axis, mask=None, keep_dims=keep_dims, dtype=dtype))  # A little crude but oh well
+
+
+@triton.jit
+def _prod_reduce(x, y):
+    return x * y
+
+
+@triton.jit
+def prod(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.reduce(tl.where(mask, input.to(dtype), 1), axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
+    else:
+        return tl.reduce(input.to(dtype), axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
+
+
+@triton.jit
+def count_nonzero(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.sum(tl.where(mask, input, 0) != 0, axis=axis, keep_dims=keep_dims, dtype=dtype)
+    else:
+        return tl.sum(input != 0, axis=axis, keep_dims=keep_dims, dtype=dtype)
+
+
+@triton.jit
+def _any_reduce(x, y):
+    return x | y
+
+
+@triton.jit
+def any(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.reduce(tl.where(mask, input != 0, False), axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims).to(
+            dtype=dtype
+        )
+    else:
+        return tl.reduce(input != 0, axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def _all_reduce(x, y):
+    return x & y
+
+
+@triton.jit
+def all(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.reduce(tl.where(mask, input != 0, True), axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims).to(
+            dtype=dtype
+        )
+    else:
+        return tl.reduce(input != 0, axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def min(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.min(tl.where(mask, input.to(dtype=dtype), float("inf")), axis=axis, keep_dims=keep_dims)
+    else:
+        return tl.min(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def max(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.max(tl.where(mask, input.to(dtype=dtype), float("-inf")), axis=axis, keep_dims=keep_dims)
+    else:
+        return tl.max(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def argmin(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.argmin(tl.where(mask, input.to(dtype=dtype), float("inf")), axis=axis, keep_dims=keep_dims)
+    else:
+        return tl.argmin(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def argmax(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    if tl.constexpr(mask is not None):
+        return tl.argmax(tl.where(mask, input.to(dtype=dtype), float("-inf")), axis=axis, keep_dims=keep_dims)
+    else:
+        return tl.argmax(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
