@@ -4,6 +4,8 @@
 
 Triton Lib (`tlib`) is an expansion on triton-lang's frontend. Tlib is written purely in python and is compatibable within functions decorated with `@triton.jit`, building off of [einx's](https://github.com/fferflo/einx) syntax and compiler with a few major changes to enable compatability with triton. This means that all functions are dynamically generated and then compiled with python's `exec()` during triton's compile-time, creating no bottlenecks during kernel runtime.
 
+Tlib expands upon the triton frontend by providing APIs for common functions. For example triton doesn't come with built in `mean` and `var` functions. Tlib adds these functions and more! Furthermore tlib will most likely also be adding a `nn` library which comes with common functions for neural networks, excluding complicated algorithms (i.e., flash attention) which don't make sense to have as modular functions.
+
 # Installation
 
 > WARNING: Currently requires Triton from source and torch 2.7.1
@@ -12,9 +14,9 @@ Triton Lib (`tlib`) is an expansion on triton-lang's frontend. Tlib is written p
 pip install -e .
 ```
 
-# Examples
+# Ops Examples
 
-Just like every other einstein notation library, `tlib` comes with fundemental ops such as `rearrange` and `reduce` (WIP). 
+Just like every other einstein notation library, `tlib` comes with fundemental ops such as `rearrange` and `reduce`. 
 
 ### Rearrange
 
@@ -26,8 +28,43 @@ import triton_lib as tlib
 @triton.jit
 def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
-    x = tlib.rearrange("a b -> b a", x) # This is equivalent to transpose in triton
+    x = tlib.rearrange("a b -> b a", x) # This is equivalent to tl.trans
 ```
+
+### Reduce
+
+Tlib has built in functionality for tensor reduction. Following syntax from einx, tlib allows bracket notation to indicate which axis to reduce along.
+
+```python
+import triton
+import triton.language as tl
+import triton_lib as tlib
+
+@triton.jit
+def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
+    x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
+    # We can use tlib.reduce and specify an op
+    out = tlib.reduce("a [b]", x, "add") # This is equivalent to tl.sum
+    # Or we can use built in functions
+    out = tlib.sum("a [b]", x)
+```
+
+### Unary VMAP
+
+Tlib supports unary operations performed on a single tensor. Being added soon!
+
+
+### Binary VMAP
+
+Being added soon!
+
+# Why create/use Tlib
+
+I will discuss, both `ops`, `functional`, and `nn` libraries added in tlib. Adding einstein notation `ops` to triton seemed like a no brainer. The readability of einstein notation in other high level frameworks such as torch, tensorfloew, jax, etc., makes it an incredibly appealing tool. Porting this functionality to triton, where we can evalue each expression at compile time convert it directly to `tl` syntax, makes it have features of high level abstractions without the performace reduction created by them.
+
+Furthermore, on my quest to improve readability, I strongly desired to expand on the functionality of `tl` base language. I really desired to have the same functionality as torch but in triton. The best way to do this was to implement standard `triton.jit` functions for new functional values.
+
+Now why use `nn` library of tlib? Honestly, the `nn` library is much more niche, however, what excites me about this functionality is that it should allow much more drag and dropable functionality to triton. When fusing layernorm and skip-connections, why rewrite a layernorm kernel from scratch when you can just call it like `tlnn.layernorm`?
 
 # Misc
 
@@ -37,6 +74,6 @@ This section will eventually be moved, but outlined are the current roadmap for 
 
 - [ ] Implement `rearrange`, `reduce`, `element-by-element`, and `dot` einstein notation ops
 - [ ] Add testing suite to `tlib`
-- [ ] Improve the number of reductions and built in operations (i.e., `var`, `mean`, etc.)
+- [x] Improve the number of reductions and built in operations (i.e., `var`, `mean`, etc.)
 
 ### Limitations of Triton Lib
