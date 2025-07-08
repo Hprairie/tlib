@@ -64,6 +64,7 @@ def create():
         max = op.reduce(ttl.max)
         argmin = op.reduce(ttl.argmin)
         argmax = op.reduce(ttl.argmax)
+        logsumexp = op.reduce(ttl.logsumexp)
 
         log = op.elementwise(ttl.log)
         exp = op.elementwise(ttl.exp)

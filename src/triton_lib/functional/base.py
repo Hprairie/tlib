@@ -222,3 +222,16 @@ def argmax(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr |
         return tl.argmax(tl.where(mask, input.to(dtype=dtype), float("-inf")), axis=axis, keep_dims=keep_dims)
     else:
         return tl.argmax(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+
+
+@triton.jit
+def logsumexp(input, axis=None, mask=None, keep_dims=False, dtype: core.constexpr | None = None):
+    """If a mask is used, then unknown behaviour/values in masked values (i.e., index marked as false)"""
+    if tl.constexpr(mask is not None):
+        input = tl.log(input.to(dtype=dtype))
+        input = tl.sum(tl.where(mask, input, 0), axis=axis, keep_dims=keep_dims)
+        return tl.exp(input)
+    else:
+        input = tl.log(input.to(dtype=dtype))
+        input = tl.sum(input, axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.exp(input)

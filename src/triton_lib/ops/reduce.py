@@ -11,11 +11,7 @@ _any = any  # Is overwritten below
 
 
 @tl.constexpr_function
-@tlib.jit(
-    trace=lambda t, c: lambda exprs, tensor_in, op, mask, backend=None: c(
-        exprs, t(tensor_in), op, t(mask)
-    )
-)
+@tlib.jit(trace=lambda t, c: lambda exprs, tensor_in, op, mask, backend=None: c(exprs, t(tensor_in), op, t(mask)))
 def reduce_stage3_mask(exprs, tensor_in, op, mask, backend=None):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
     for root in [expr_in, expr_out]:
@@ -29,20 +25,14 @@ def reduce_stage3_mask(exprs, tensor_in, op, mask, backend=None):
 
 
 @tl.constexpr_function
-@tlib.jit(
-    trace=lambda t, c: lambda exprs, tensor_in, op, backend=None: c(
-        exprs, t(tensor_in), op
-    )
-)
+@tlib.jit(trace=lambda t, c: lambda exprs, tensor_in, op, backend=None: c(exprs, t(tensor_in), op))
 def reduce_stage3(exprs, tensor_in, op, backend=None):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
     for root in [expr_in, expr_out]:
         for expr in root.all():
             if isinstance(expr, tlib.expr.stage3.Concatenation):
                 raise ValueError("Concatenation not allowed")
-    tensors_out, exprs_out = tlib.ops.vmap_with_axis_stage3(
-        [expr_in], [tensor_in], [expr_out], op, backend=backend
-    )
+    tensors_out, exprs_out = tlib.ops.vmap_with_axis_stage3([expr_in], [tensor_in], [expr_out], op, backend=backend)
     return tensors_out[0]
 
 
@@ -63,16 +53,13 @@ def parse(description, tensor_shape, keepdims=None, cse=True):
 
     if len(op) == 1:
         expr_in = tlib.expr.solve(
-            tlib.expr.input_equations(op[0], [tensor_shape])
-            + tlib.expr.constraint_equations(parameters),
+            tlib.expr.input_equations(op[0], [tensor_shape]) + tlib.expr.constraint_equations(parameters),
             cse=cse,
             cse_in_markers=True,
             signature=signature,
         )[0]
 
-        if not _any(
-            isinstance(expr, tlib.expr.stage3.Marker) for expr in expr_in.all()
-        ):
+        if not _any(isinstance(expr, tlib.expr.stage3.Marker) for expr in expr_in.all()):
             raise ValueError("No axes are marked for reduction")
 
         # Determine output expressions by removing markers from input expressions
@@ -106,15 +93,10 @@ def parse(description, tensor_shape, keepdims=None, cse=True):
         # If no axes are marked for reduction in expr_in, mark all axes that
         # don't appear in expr_out
         if not _any(tlib.expr.stage3.is_marked(expr) for expr in expr_in.all()):
-            axes_names_out = {
-                axis.name
-                for axis in expr_out.all()
-                if isinstance(axis, tlib.expr.stage3.Axis)
-            }
+            axes_names_out = {axis.name for axis in expr_out.all() if isinstance(axis, tlib.expr.stage3.Axis)}
             expr_in = tlib.expr.stage3.mark(
                 expr_in,
-                lambda expr: isinstance(expr, tlib.expr.stage3.Axis)
-                and expr.name not in axes_names_out,
+                lambda expr: isinstance(expr, tlib.expr.stage3.Axis) and expr.name not in axes_names_out,
             )
 
     return tlib.ops.util._wrap_triton_constexpr(expr_in, expr_out)
@@ -300,114 +282,104 @@ def prod(
     )
 
 
-# @tlib.traceback_util.filter
-# def count_nonzero(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="count_nonzero"``"""
-#     return reduce(
-#         description,
-#         tensor,
-#         op="count_nonzero",
-#         keepdims=keepdims,
-#         backend=backend,
-#         cse=cse,
-#         **parameters,
-#     )
+@triton.jit
+def count_nonzero(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="count_nonzero"``"""
+    return reduce(
+        description,
+        tensor,
+        op="count_nonzero",
+        mask=mask,
+        keepdims=keepdims,
+        cse=cse,
+    )
 
 
-# def count_nonzero_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="count_nonzero", **kwargs)
+@triton.jit
+def any(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="any"``"""
+    return reduce(description, tensor, op="any", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# @tlib.traceback_util.filter
-# def any(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="any"``"""
-#     return reduce(
-#         description, tensor, op="any", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
+@triton.jit
+def all(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="all"``"""
+    return reduce(description, tensor, op="all", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# def any_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="any", **kwargs)
+@triton.jit
+def max(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="max"``"""
+    return reduce(description, tensor, op="max", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# @tlib.traceback_util.filter
-# def all(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     cse: bool = True,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="all"``"""
-#     return reduce(
-#         description, tensor, op="all", keepdims=keepdims, backend=backend, cse=cse, **parameters
-#     )
+@triton.jit
+def min(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="min"``"""
+    return reduce(description, tensor, op="min", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# def all_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="all", **kwargs)
+@triton.jit
+def argmax(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="max"``"""
+    return reduce(description, tensor, op="argmax", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# @tlib.traceback_util.filter
-# def max(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="max"``"""
-#     return reduce(description, tensor, op="max", keepdims=keepdims, backend=backend, **parameters)
+@triton.jit
+def argmin(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="min"``"""
+    return reduce(description, tensor, op="argmin", mask=mask, keepdims=keepdims, cse=cse)
 
 
-# def max_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="max", **kwargs)
-
-
-# @tlib.traceback_util.filter
-# def min(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="min"``"""
-#     return reduce(description, tensor, op="min", keepdims=keepdims, backend=backend, **parameters)
-
-
-# def min_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="min", **kwargs)
-
-
-# @tlib.traceback_util.filter
-# def logsumexp(
-#     description: str,
-#     tensor: tlib.Tensor,
-#     keepdims: Union[bool, None] = None,
-#     backend: Union[tlib.Backend, str, None] = None,
-#     **parameters: npt.ArrayLike,
-# ) -> tlib.Tensor:
-#     """Specialization of :func:`tlib.reduce` with ``op="logsumexp"``"""
-#     return reduce(
-#         description, tensor, op="logsumexp", keepdims=keepdims, backend=backend, **parameters
-#     )
-
-
-# def logsumexp_stage3(*args, **kwargs):
-#     return reduce_stage3(*args, op="logsumexp", **kwargs)
+@triton.jit
+def logsumexp(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    keepdims: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.reduce` with ``op="logsumexp"``"""
+    return reduce(description, tensor, op="logsumexp", mask=mask, keepdims=keepdims, cse=cse)
