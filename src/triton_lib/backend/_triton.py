@@ -9,7 +9,7 @@ from functools import partial
 
 
 def create():
-    ttl = tracer.import_("triton_lib.functional.base", "tlib")
+    ttl = tracer.import_("triton_lib.functional", "tlf")
 
     class triton(Backend):
         name = "triton"

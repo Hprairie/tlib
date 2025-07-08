@@ -2,6 +2,7 @@ import torch
 import triton
 import triton.language as tl
 import triton_lib as tlib
+import triton_lib.functional as tlf
 
 
 @triton.jit
@@ -18,7 +19,8 @@ def my_kernel(
     # )
     # x = tlib.reduce("[a] b", x, "sum", mask=tl.arange(0, LENGHT) < (LENGHT // 2))
     # x = tlib.reduce("[a] b", x, "sum")
-    x = tlib.std("[a] b", x)
+    x = tlf.mean(x, axis=-1)
+    # x = tlib.mean("[a] b", x)
     tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
 
