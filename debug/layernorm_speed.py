@@ -65,7 +65,7 @@ def _layer_norm_forward_kernel_tlib(
     W_row = tl.load(W_ptr + col_offsets, mask=mask, other=0)
     B_row = tl.load(B_ptr + col_offsets, mask=mask, other=0)
 
-    Y_row, rstd, mean = tlnn.layer_norm(X_row, weight=W_row, bias=B_row, eps=eps, return_rstd_mean=True)
+    Y_row, rstd, mean = tlnn.layer_norm(X_row, mask=mask, weight=W_row, bias=B_row, eps=eps, return_rstd_mean=True)
 
     tl.store(Mean_ptr + col_offsets, mean, mask=mask)
     tl.store(RSTD_ptr + col_offsets, rstd, mask=mask)

@@ -7,12 +7,13 @@ import triton_lib.functional as tlf
 def layer_norm(
     input: tl.tensor,
     normalized_shape: tl.constexpr = -1,
+    mask: tl.tensor | None = None,
     weight: tl.tensor | None = None,
     bias: tl.tensor | None = None,
     eps: tl.constexpr = 1e-05,
     return_rstd_mean: tl.constexpr = False,
 ) -> tl.tensor | tuple[tl.tensor, tl.tensor, tl.tensor]:
-    var, mean = tlf.var(input, axis=normalized_shape, return_mean=True)
+    var, mean = tlf.var(input, axis=normalized_shape, mask=mask, return_mean=True)
     rstd = tl.rsqrt(var + eps)
     if tl.constexpr(weight is not None and bias is not None):
         out = mean * rstd * weight + bias
