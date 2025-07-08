@@ -12,8 +12,26 @@ _any = any  # Is overwritten below
 
 @tl.constexpr_function
 @tlib.jit(
+    trace=lambda t, c: lambda exprs, tensor_in, op, mask, backend=None: c(
+        exprs, t(tensor_in), op, t(mask)
+    )
+)
+def reduce_stage3_mask(exprs, tensor_in, op, mask, backend=None):
+    expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
+    for root in [expr_in, expr_out]:
+        for expr in root.all():
+            if isinstance(expr, tlib.expr.stage3.Concatenation):
+                raise ValueError("Concatenation not allowed")
+    tensors_out, exprs_out = tlib.ops.vmap_with_axis_stage3(
+        [expr_in], [tensor_in], [expr_out], op, mask, backend=backend
+    )
+    return tensors_out[0]
+
+
+@tl.constexpr_function
+@tlib.jit(
     trace=lambda t, c: lambda exprs, tensor_in, op, backend=None: c(
-        exprs, t(tensor_in), op=op
+        exprs, t(tensor_in), op
     )
 )
 def reduce_stage3(exprs, tensor_in, op, backend=None):
@@ -107,6 +125,7 @@ def reduce(
     description: tl.constexpr,
     tensor: tl.tensor,
     op: tl.constexpr,
+    mask: tl.tensor | None = None,
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
@@ -179,7 +198,10 @@ def reduce(
         keepdims=keepdims,
         cse=cse,
     )
-    tensor = reduce_stage3(reprs, tensor, op=op)(tensor)
+    if tl.constexpr(mask is not None):
+        tensor = reduce_stage3_mask(reprs, tensor, op=op, mask=mask)(tensor, mask)
+    else:
+        tensor = reduce_stage3(reprs, tensor, op=op)(tensor)
     return tensor
 
 

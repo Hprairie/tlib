@@ -98,17 +98,42 @@ def minimum(x, y):
 
 
 # Reductions
-sum = tl.sum
+@triton.jit
+def sum(
+    input,
+    axis=None,
+    mask=None,
+    keep_dims=False,
+    dtype: core.constexpr | None = None,
+):
+    if tl.constexpr(mask is not None):
+        return tl.sum(
+            tl.where(mask, input, 0.0), axis=axis, keep_dims=keep_dims, dtype=dtype
+        )
+    else:
+        return tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
 
 
 @triton.jit
-def mean(input, axis=None, keep_dims=False, dtype: core.constexpr | None = None):
+def mean(
+    input,
+    axis=None,
+    mask=None,
+    keep_dims=False,
+    dtype: core.constexpr | None = None,
+):
     total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
     return total / input.shape[axis]
 
 
 @triton.jit
-def var(input, axis=None, keep_dims=False, dtype: core.constexpr | None = None):
+def var(
+    input,
+    axis=None,
+    mask=None,
+    keep_dims=False,
+    dtype: core.constexpr | None = None,
+):
     mean_val = mean(input, axis=axis, keep_dims=True, dtype=dtype)
     norm = input - mean_val
     total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)

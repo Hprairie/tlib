@@ -3,12 +3,17 @@ from . import util
 
 
 @tlib.jit(
-    trace=lambda t, c: lambda exprs_in, tensors_in, exprs_out, op, kwargs={}, backend=None: c(
-        exprs_in, [t(x) for x in tensors_in], exprs_out, op, kwargs
+    trace=lambda t, c: lambda exprs_in, tensors_in, exprs_out, op, mask, kwargs={}, backend=None: c(
+        exprs_in,
+        [t(x) for x in tensors_in],
+        exprs_out,
+        op,
+        t(mask) if mask is not None else mask,
+        kwargs,
     )
 )
 def vmap_with_axis_stage3(
-    exprs_in, tensors_in, exprs_out, op, kwargs=None, backend=None
+    exprs_in, tensors_in, exprs_out, op, mask=None, kwargs=None, backend=None
 ):
     if kwargs is None:
         kwargs = {}
@@ -172,7 +177,10 @@ def vmap_with_axis_stage3(
             ),
         )
 
-    tensors_out = op(*tensors_in, **kwargs)
+    if mask is None:
+        tensors_out = op(*tensors_in, **kwargs)
+    else:
+        tensors_out = op(*tensors_in, mask=mask, **kwargs)
 
     if not isinstance(tensors_out, (tuple, list)):
         tensors_out = (tensors_out,)

@@ -18,8 +18,9 @@ def my_kernel(
     #     o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :],
     #     x,
     # )
-    # x = tlib.reduce("[a] b", x, "sum")
-    x = tlib.var("[a] b", x)
+    # x = tlib.reduce("[a] b", x, "sum", mask=tl.arange(0, LENGHT) < (LENGHT // 2))
+    x = tlib.reduce("[a] b", x, "sum")
+    # x = tlib.var("[a] b", x)
     tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
 
