@@ -37,7 +37,6 @@ def reduce_stage3(exprs, tensor_in, op, backend=None):
 
 
 @tl.constexpr_function
-@tlib.lru_cache
 def parse(description, tensor_shape, keepdims=None, cse=True):
     description, parameters = tlib.ops.util._clean_description(description)
     signature = tlib.expr.CallSignature(text=description, parameters=parameters)

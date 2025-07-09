@@ -8,7 +8,6 @@ from typing import Union
 
 
 @tl.constexpr_function
-@tlib.lru_cache
 def parse(
     description: str,
     tensor_shapes: tuple,

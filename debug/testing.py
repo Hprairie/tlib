@@ -6,28 +6,14 @@ import triton_lib.functional as tlf
 
 
 @triton.jit
-def take_3(x, y, z):
-    return x, y, z
-
-
-@triton.jit
-def take_many(tensors):
-    if tl.constexpr(isinstance(tensors, tl.tensor)):
-        tl.static_print("hello")
-        return tensors
-    else:
-        x, y, z = take_3(*tensors)  # Triton allows unpacking!!!!
-        return x, y, z
-
-
-@triton.jit
 def my_kernel(
     x_ptr,
     o_ptr,
     LENGHT: tl.constexpr,
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    x = tlib.softmax("a [b]", x)
+    x = tlib.flip("a [b]", x)
+    x = tlib.sort("a [b]", x)
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)

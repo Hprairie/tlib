@@ -22,7 +22,6 @@ def unary_stage3(exprs, tensor_in, op, backend=None):
 
 
 @tl.constexpr_function
-@tlib.lru_cache
 def parse(description, tensor_shapes, cse=True):
     tensor_shapes = [tensor_shapes]
     description, parameters = tlib.ops.util._clean_description(description)
@@ -193,5 +192,37 @@ def softmax(
         tensor,
         op="softmax",
         mask=mask,
+        cse=cse,
+    )
+
+
+@triton.jit
+def sort(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    descending: tl.constexpr = False,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="sort"``"""
+    return unary(
+        description,
+        tensor,
+        op="sort",
+        cse=cse,
+    )
+
+
+@triton.jit
+def associative_scan(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    combine_fn: tl.constexpr,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="sort"``"""
+    return unary(
+        description,
+        tensor,
+        op="associative_scan",
         cse=cse,
     )
