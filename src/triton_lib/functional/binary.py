@@ -25,23 +25,3 @@ def cross_entropy(
 
 @triton.jit
 def mse(input1, input2, axis=None, mask: tl.tensor | None = None, dtype: core.constexpr | None = None) -> tl.tensor: ...
-
-
-@triton.jit
-def cumsum(
-    input,
-    axis=None,
-    mask: tl.tensor | None = None,
-    reverse: tl.constexpr | None = None,
-    dtype: core.constexpr | None = None,
-) -> tl.tensor: ...
-
-
-@triton.jit
-def cumprod(
-    input,
-    axis=None,
-    mask: tl.tensor | None = None,
-    reverse: tl.constexpr | None = None,
-    dtype: core.constexpr | None = None,
-) -> tl.tensor: ...

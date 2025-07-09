@@ -28,11 +28,10 @@ def create():
         reshape = op.reshape(ttl.reshape)
         transpose = op.transpose(ttl.transpose)
         broadcast_to = op.broadcast_to(ttl.broadcast_to)
-        # einsum = op.einsum(ttl.einsum)
         arange = op.arange(ttl.arange)
 
         stack = op.stack(ttl.stack)
-        concatenate = op.concatenate(ttl.cat)
+        concatenate = op.concatenate(ttl.concatenate)
 
         add = associative_binary_to_nary(op.elementwise(ttl.add))
         subtract = op.elementwise(ttl.subtract)
@@ -71,6 +70,17 @@ def create():
         sqrt = op.elementwise(ttl.sqrt)
         square = op.elementwise(ttl.square)
 
+        # Unary ops
+        cumsum = op.keep_shape(ttl.cumsum)
+        cumprod = op.keep_shape(ttl.cumprod)
+        flip = op.keep_shape(ttl.flip)
+        softmax = op.keep_shape(ttl.softmax)
+        sort = op.keep_shape(ttl.sort)
+        histogram = op.keep_shape(ttl.histogram)
+        associative_scan = op.keep_shape(ttl.associative_scan)
+
+        # Binary ops
+
         @staticmethod
         @tlib.trace
         def get_at(tensor, coordinates):
@@ -91,7 +101,6 @@ def create():
         # def subtract_at(tensor, coordinates, updates):
         #     return tensor.__setitem__(coordinates, tensor.__getitem__(coordinates).__isub__(updates))
 
-        flip = op.keep_shape(ttl.flip)
         # roll = op.keep_shape(ttl.roll)
 
     return triton()
