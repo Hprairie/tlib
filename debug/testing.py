@@ -27,10 +27,11 @@ def my_kernel(
     LENGHT: tl.constexpr,
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    x = tlib.unary("a [b]", x, "cumsum")
+    x = tlib.cumsum("a [b]", x)
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
-    tl.store(o_ptr + tl.arange(0, LENGHT * 2), x)
+    tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)
+    # tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
 
 def launch(x):

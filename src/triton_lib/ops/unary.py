@@ -127,3 +127,71 @@ def unary(
     else:
         tensor = unary_stage3(reprs, tensor, op=op)(tensor)
     return tensor
+
+
+@triton.jit
+def cumsum(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    reverse: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="cumsum"``"""
+    return unary(
+        description,
+        tensor,
+        op="cumsum",
+        mask=mask,
+        cse=cse,
+    )
+
+
+@triton.jit
+def cumprod(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    reverse: tl.constexpr | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="cumprod"``"""
+    return unary(
+        description,
+        tensor,
+        op="cumsum",
+        mask=mask,
+        cse=cse,
+    )
+
+
+@triton.jit
+def flip(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="flip"``"""
+    return unary(
+        description,
+        tensor,
+        op="flip",
+        cse=cse,
+    )
+
+
+@triton.jit
+def softmax(
+    description: tl.constexpr,
+    tensor: tl.tensor,
+    mask: tl.tensor | None = None,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.unary` with ``op="softmax"``"""
+    return unary(
+        description,
+        tensor,
+        op="softmax",
+        mask=mask,
+        cse=cse,
+    )
