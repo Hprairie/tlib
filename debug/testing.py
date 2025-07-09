@@ -27,7 +27,7 @@ def my_kernel(
     LENGHT: tl.constexpr,
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    x = tlib.cumsum("a [b]", x)
+    x = tlib.softmax("a [b]", x)
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)
@@ -41,9 +41,10 @@ def launch(x):
     return o
 
 
-x = torch.arange(8).to("cuda")
+x = torch.arange(8).to("cuda", dtype=torch.float32)
 x = x[:, None] * 8 + x[None, :]
 o = launch(x)
+# print(torch.softmax(x, dim=-1))
 print(o)
 
 

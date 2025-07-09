@@ -179,12 +179,11 @@ def max(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.max(tl.where(mask, input.to(dtype=dtype), float("-inf")), axis=axis, keep_dims=keep_dims)
+        return tl.max(tl.where(mask, input, float("-inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.max(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.max(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -193,12 +192,11 @@ def argmin(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.argmin(tl.where(mask, input.to(dtype=dtype), float("inf")), axis=axis, keep_dims=keep_dims)
+        return tl.argmin(tl.where(mask, input, float("inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.argmin(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.argmin(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -207,12 +205,11 @@ def argmax(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.argmax(tl.where(mask, input.to(dtype=dtype), float("-inf")), axis=axis, keep_dims=keep_dims)
+        return tl.argmax(tl.where(mask, input, float("-inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.argmax(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.argmax(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit

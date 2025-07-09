@@ -76,7 +76,6 @@ def create():
         flip = op.keep_shape(ttl.flip)
         softmax = op.keep_shape(ttl.softmax)
         sort = op.keep_shape(ttl.sort)
-        histogram = op.keep_shape(ttl.histogram)
         associative_scan = op.keep_shape(ttl.associative_scan)
 
         # Binary ops

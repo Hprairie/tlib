@@ -32,7 +32,7 @@ def cumprod(
 
 @triton.jit
 def flip(
-    input,
+    input: tl.tensor,
     axis: tl.constexpr | None = None,
 ) -> tl.tensor:
     return tl.flip(input, dim=axis)  # Why does triton have dim and not axis for this, so dumb
@@ -40,18 +40,39 @@ def flip(
 
 @triton.jit
 def softmax(
-    input,
+    input: tl.tensor,
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
+    eps: tl.constexpr = 1e-10,
 ) -> tl.tensor:
+    raise NotImplemented
     if tl.constexpr(mask is not None):
         # Can this be a single tl.where? Seem's like potentially unsafe and could create nan
         _norm = input - tlf.max(input, axis, mask=mask)
         _exp = tl.exp(_norm)
         _denom = tlf.sum(_exp, axis, mask=mask)
-        return _exp / _denom
+        return _exp / (_denom)
     else:
-        _norm = input - tlf.max(input, axis)
+        _norm = input - tlf.max(input, axis=axis, keep_dims=True)
         _exp = tl.exp(_norm)
-        _denom = tlf.sum(_exp, axis)
-        return _exp / _denom
+        _denom = tlf.sum(_exp, axis=axis, keep_dims=True)
+        return _exp / (_denom + eps)
+
+
+@triton.jit
+def sort(
+    input: tl.tensor,
+    axis: tl.constexpr | None = None,
+    descending: tl.constexpr = False,
+) -> tl.tensor:
+    return tl.sort(input, dim=axis, descending=descending)  # Why does triton have dim and not axis for this, so dumb
+
+
+@triton.jit
+def associative_scan(
+    input: tl.tensor,
+    combine_function: tl.constexpr,
+    axis: tl.constexpr | None = None,
+    reverse: tl.constexpr = False,
+) -> tl.tensor:
+    return tl.associative_scan(input, axis=axis, combine_fn=combine_function, reverse=reverse)
