@@ -11,14 +11,9 @@ from typing import Union
 @tlib.lru_cache
 def parse(
     description: str,
-    x_shape: tlc.tuple | None,
-    y_shape: tlc.tuple | None,
-    z_shape: tlc.tuple | None,
+    tensor_shapes: tuple,
     cse: bool,
 ) -> tuple[tl.constexpr, tl.constexpr]:
-    tensor_shapes = [
-        shape for shape in [x_shape, y_shape, z_shape] if shape is not None
-    ]
     description, parameters = tlib.ops.util._clean_description(description)
     signature = tlib.expr.CallSignature(text=description, parameters=parameters)
 
@@ -32,9 +27,7 @@ def parse(
             )
 
     if len(op[0]) != len(tensor_shapes):
-        raise ValueError(
-            f"Expected {len(op[0])} input tensors, but got {len(tensor_shapes)}"
-        )
+        raise ValueError(f"Expected {len(op[0])} input tensors, but got {len(tensor_shapes)}")
 
     exprs = tlib.expr.solve(
         tlib.expr.input_equations(op[0], tensor_shapes)
@@ -48,23 +41,14 @@ def parse(
 
 
 @tl.constexpr_function
-@tlib.jit(
-    trace=lambda t, c: lambda exprs, x, y, z: c(
-        exprs, *(t(arg) if arg is not None else None for arg in [x, y, z])
-    )
-)
-def rearrange_stage3(out, x, y, z, backend=None):
-    tensors_in = [v for v in [x, y, z] if v is not None]
+@tlib.jit(trace=lambda t, c: lambda exprs, tensors_in: c(exprs, tuple([t(arg) for arg in tensors_in])))
+def rearrange_stage3(out, tensors_in, backend=None):
     exprs_in, exprs_out = tlib.ops.util._unwrap_triton_constexpr(*out)
 
     if len(exprs_in) != len(tensors_in):
-        raise ValueError(
-            f"Expected {len(exprs_in)} input tensor(s), got {len(tensors_in)}"
-        )
+        raise ValueError(f"Expected {len(exprs_in)} input tensor(s), got {len(tensors_in)}")
     if any(
-        isinstance(expr, tlib.expr.stage3.Marker)
-        for root in list(exprs_in) + list(exprs_out)
-        for expr in root.all()
+        isinstance(expr, tlib.expr.stage3.Marker) for root in list(exprs_in) + list(exprs_out) for expr in root.all()
     ):
         raise ValueError(f"Marker '{expr}' is not allowed")
 
@@ -96,9 +80,7 @@ def rearrange_stage3(out, x, y, z, backend=None):
     ]
 
     # Unflatten output expressions
-    tensors = tlib.ops.util.unflatten(
-        exprs_out_flat, tensors, exprs_out, backend=backend
-    )
+    tensors = tlib.ops.util.unflatten(exprs_out_flat, tensors, exprs_out, backend=backend)
 
     return tensors
 
@@ -106,23 +88,16 @@ def rearrange_stage3(out, x, y, z, backend=None):
 @triton.jit
 def rearrange(
     description: tl.constexpr,
-    x: tl.tensor,
-    y: tl.tensor | None = None,
-    z: tl.tensor | None = None,
+    tensors,
     cse: tl.constexpr = True,
 ) -> Union[tl.tensor, tuple[tl.tensor]]:
-    out: tl.constexpr = parse(
-        description,
-        tlib.tracer.get_shape(x),
-        tlib.tracer.get_shape(y),
-        tlib.tracer.get_shape(z),
-        cse=cse,
-    )
-
-    func: tl.constexpr = rearrange_stage3(out, x, y, z)
-    if tl.constexpr(y is None and z is None):
-        return func(x)[0]
-    elif tl.constexpr(z is None):
-        return func(x, y)
+    if tl.constexpr(isinstance(tensors, tl.tensor)):
+        tensors = (tensors,)
+    tensor_shapes: tl.constexpr = tlib.ops.util.get_shapes(tensors)
+    out: tl.constexpr = parse(description, tensor_shapes, cse=cse)
+    func: tl.constexpr = rearrange_stage3(out, tensors)
+    out_tensors = func(*tensors)
+    if tl.constexpr(len(out_tensors) == 1):
+        return out_tensors[0]
     else:
-        return func(x, y, z)
+        return out_tensors

@@ -13,10 +13,8 @@ from functools import partial
 #         return None
 
 
-
-
 class op:
-    def reshape(op: Tracer): # type: ignore
+    def reshape(op: Tracer):  # type: ignore
         @trace
         def reshape(tensor, shape):
             if shape == get_shape(tensor):
@@ -26,7 +24,7 @@ class op:
 
         return reshape
 
-    def transpose(op: Tracer): # type: ignore
+    def transpose(op: Tracer):  # type: ignore
         @trace
         def transpose(tensor, perm):
             if list(perm) == list(range(tensor.ndim)):
@@ -37,19 +35,17 @@ class op:
 
         return transpose
 
-    def broadcast_to(op: Tracer): # type: ignore
+    def broadcast_to(op: Tracer):  # type: ignore
         @trace
         def broadcast_to(tensor, shape):
             if get_shape(tensor) == shape:
                 return tensor
             else:
-                return apply(
-                    op, args=[tensor, shape], output=Tensor(shape), signature="broadcast_to"
-                )
+                return apply(op, args=[tensor, shape], output=Tensor(shape), signature="broadcast_to")
 
         return broadcast_to
 
-    def einsum(op: Tracer): # type: ignore
+    def einsum(op: Tracer):  # type: ignore
         @trace
         def einsum(eq, *tensors, **kwargs):
             exprs = eq.split("->")[0].split(",")
@@ -60,16 +56,12 @@ class op:
                 expr = expr.strip().replace(" ", "")
                 if len(expr) != len(tensor.shape):
                     raise ValueError(
-                        f"Expected {len(expr)} axes, got {len(tensor.shape)} for {i}-th "
-                        "(zero-based) input tensor"
+                        f"Expected {len(expr)} axes, got {len(tensor.shape)} for {i}-th " "(zero-based) input tensor"
                     )
                 for axis, value in zip(expr, tensor.shape):
                     if axis in values:
                         if values[axis] != value:
-                            raise ValueError(
-                                f"Got conflicting values for axis {axis}: "
-                                f"{values[axis]} and {value}"
-                            )
+                            raise ValueError(f"Got conflicting values for axis {axis}: " f"{values[axis]} and {value}")
                     else:
                         values[axis] = value
             expr_out = eq.split("->")[-1].strip().replace(" ", "")
@@ -78,14 +70,14 @@ class op:
 
         return einsum
 
-    def arange(op: Tracer): # type: ignore
+    def arange(op: Tracer):  # type: ignore
         @trace
         def arange(n, dtype="int32"):
             return apply(op, args=[n], kwargs={"dtype": dtype}, output=Tensor((n,)))
 
         return arange
 
-    def stack(op: Tracer): # type: ignore
+    def stack(op: Tracer):  # type: ignore
         @trace
         def stack(tensors, axis=0):
             if axis < 0:
@@ -96,7 +88,7 @@ class op:
 
         return stack
 
-    def concatenate(op: Tracer): # type: ignore
+    def concatenate(op: Tracer):  # type: ignore
         @trace
         def concatenate(tensors, axis=0):
             shape = list(tensors[0].shape)
@@ -105,14 +97,14 @@ class op:
 
         return concatenate
 
-    def fill_constant(op: Tracer, value): # type: ignore
+    def fill_constant(op: Tracer, value):  # type: ignore
         @trace
         def fill_constant(shape, dtype="float32"):
             return apply(op, args=[shape], kwargs={"dtype": dtype}, output=Tensor(shape))
 
         return fill_constant
 
-    def elementwise(op: Tracer): # type: ignore
+    def elementwise(op: Tracer):  # type: ignore
         @trace
         def elementwise(*args, **kwargs):
             shape = None
@@ -133,14 +125,14 @@ class op:
 
         return elementwise
 
-    def keep_shape(op: Tracer): # type: ignore
+    def keep_shape(op: Tracer):  # type: ignore
         @trace
         def keep_shape(*args, **kwargs):
             return apply(op, args=args, kwargs=kwargs, output=Tensor(args[0].shape))
 
         return keep_shape
 
-    def reduce(op: Tracer): # type: ignore
+    def reduce(op: Tracer):  # type: ignore
         @trace
         def reduce(tensor, axis=None, **kwargs):
             keepdims = kwargs.get("keepdims", False)
@@ -160,7 +152,7 @@ class op:
 
         return reduce
 
-    def get_at(op: Tracer): # type: ignore
+    def get_at(op: Tracer):  # type: ignore
         @trace
         def get_at(tensor, coordinates):
             coordinates2 = (coordinates,) if not isinstance(coordinates, tuple) else coordinates
@@ -210,11 +202,7 @@ class op:
                 shape = [broadcast(shapes[:, i]) for i in range(shapes.shape[1])]
 
                 # Prepend and append slices
-                shape = tuple(
-                    [tensor.shape[i] for i in front_slices]
-                    + shape
-                    + [tensor.shape[i] for i in back_slices]
-                )
+                shape = tuple([tensor.shape[i] for i in front_slices] + shape + [tensor.shape[i] for i in back_slices])
             else:
                 output_shape = []
                 input_shape = tensor.shape
@@ -237,7 +225,7 @@ class op:
 
         return get_at
 
-    def update_at(op: Tracer = None, inplace=False): # type: ignore
+    def update_at(op: Tracer = None, inplace=False):  # type: ignore
         if op is None:
             return partial(einx.tracer.tensor.op.update_at, inplace=inplace)
 
@@ -299,37 +287,27 @@ class Tensor(Tracer):
     def __iadd__(self, value):
         if not isinstance(self.origin.op, GetAt):
             raise ValueError("Inplace operator only supported for get_at outputs")
-        return op.update_at(AssignAt("+="), inplace=True)(
-            self.origin.args[0], self.origin.args[1], value
-        )
+        return op.update_at(AssignAt("+="), inplace=True)(self.origin.args[0], self.origin.args[1], value)
 
     def __isub__(self, value):
         if not isinstance(self.origin.op, GetAt):
             raise ValueError("Inplace operator only supported for get_at outputs")
-        return op.update_at(AssignAt("-="), inplace=True)(
-            self.origin.args[0], self.origin.args[1], value
-        )
+        return op.update_at(AssignAt("-="), inplace=True)(self.origin.args[0], self.origin.args[1], value)
 
     def __imul__(self, value):
         if not isinstance(self.origin.op, GetAt):
             raise ValueError("Inplace operator only supported for get_at outputs")
-        return op.update_at(AssignAt("*="), inplace=True)(
-            self.origin.args[0], self.origin.args[1], value
-        )
+        return op.update_at(AssignAt("*="), inplace=True)(self.origin.args[0], self.origin.args[1], value)
 
     def __itruediv__(self, value):
         if not isinstance(self.origin.op, GetAt):
             raise ValueError("Inplace operator only supported for get_at outputs")
-        return op.update_at(AssignAt("/="), inplace=True)(
-            self.origin.args[0], self.origin.args[1], value
-        )
+        return op.update_at(AssignAt("/="), inplace=True)(self.origin.args[0], self.origin.args[1], value)
 
     def __ifloordiv__(self, value):
         if not isinstance(self.origin.op, GetAt):
             raise ValueError("Inplace operator only supported for get_at outputs")
-        return op.update_at(AssignAt("//="), inplace=True)(
-            self.origin.args[0], self.origin.args[1], value
-        )
+        return op.update_at(AssignAt("//="), inplace=True)(self.origin.args[0], self.origin.args[1], value)
 
     def __add__(self, other):
         return op.elementwise(Operator("+"))(self, other)
