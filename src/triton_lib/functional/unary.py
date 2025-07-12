@@ -71,8 +71,9 @@ def sort(
 @triton.jit
 def associative_scan(
     input: tl.tensor,
-    combine_function: tl.constexpr,
+    combine_fn,
     axis: tl.constexpr | None = None,
     reverse: tl.constexpr = False,
 ) -> tl.tensor:
-    return tl.associative_scan(input, axis=axis, combine_fn=combine_function, reverse=reverse)
+    tl.static_print(combine_fn)
+    return tl.associative_scan(input, axis=axis, combine_fn=combine_fn, reverse=reverse)

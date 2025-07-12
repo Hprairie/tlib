@@ -1,3 +1,4 @@
+import builtins
 import triton_lib as tlib
 import numpy as np
 
@@ -217,6 +218,11 @@ def _wrap_triton_constexpr(*args):
 def _unwrap_triton_constexpr(*args):
     """Unwraps triton constexpr"""
     return tuple([arg.value for arg in args])
+
+
+@tl.constexpr_function
+def dict(**kwargs):
+    return tl.constexpr(builtins.dict(**kwargs))
 
 
 @tl.constexpr_function

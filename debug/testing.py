@@ -6,14 +6,20 @@ import triton_lib.functional as tlf
 
 
 @triton.jit
+def add(x, y):
+    return x + y
+
+
+@triton.jit
 def my_kernel(
     x_ptr,
     o_ptr,
     LENGHT: tl.constexpr,
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    x = tlib.flip("a [b]", x)
-    x = tlib.sort("a [b]", x)
+    # x = tl.associative_scan(x, combine_fn=add, axis=1)
+    x = tlib.associative_scan("a [b]", x, combine_fn=add)
+    # x = tlib.sort("a [b]", x)
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)

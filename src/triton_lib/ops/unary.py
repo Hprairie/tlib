@@ -6,18 +6,22 @@ from triton_lib.ops.vmap_with_axis import vmap_with_axis_stage3
 
 
 @tl.constexpr_function
-@tlib.jit(trace=lambda t, c: lambda exprs, tensor_in, op, mask, backend=None: c(exprs, t(tensor_in), op, t(mask)))
-def unary_stage3_mask(exprs, tensor_in, op, mask, backend=None):
+@tlib.jit(
+    trace=lambda t, c: lambda exprs, tensor_in, op, mask, kwargs, backend=None: c(
+        exprs, t(tensor_in), op, t(mask), kwargs
+    )
+)
+def unary_stage3_mask(exprs, tensor_in, op, mask, kwargs, backend=None):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
-    tensors_out, _ = vmap_with_axis_stage3(expr_in, [tensor_in], expr_out, op, mask, backend=backend)
+    tensors_out, _ = vmap_with_axis_stage3(expr_in, [tensor_in], expr_out, op, mask, kwargs=kwargs, backend=backend)
     return tensors_out[0]
 
 
 @tl.constexpr_function
-@tlib.jit(trace=lambda t, c: lambda exprs, tensor_in, op, backend=None: c(exprs, t(tensor_in), op))
-def unary_stage3(exprs, tensor_in, op, backend=None):
+@tlib.jit(trace=lambda t, c: lambda exprs, tensor_in, op, kwargs, backend=None: c(exprs, t(tensor_in), op, kwargs))
+def unary_stage3(exprs, tensor_in, op, kwargs, backend=None):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
-    tensors_out, _ = vmap_with_axis_stage3(expr_in, [tensor_in], expr_out, op, backend=backend)
+    tensors_out, _ = vmap_with_axis_stage3(expr_in, [tensor_in], expr_out, op, kwargs=kwargs, backend=backend)
     return tensors_out[0]
 
 
@@ -67,8 +71,8 @@ def unary(
     tensor: tl.tensor,
     op: tl.constexpr,
     mask: tl.tensor | None = None,
-    reverse: tl.constexpr | None = None,  # For non commutative operations
     cse: tl.constexpr = True,
+    kwargs: tl.constexpr | None = None,
 ) -> tl.tensor:
     """Applies a function to the marked axes of the input tensors by passing the ``axis``
     argument and relying on implicit broadcasting rules.
@@ -122,9 +126,9 @@ def unary(
     """
     reprs: tl.constexpr = parse(description, tlib.tracer.get_shape(tensor), cse=cse)
     if tl.constexpr(mask is not None):
-        tensor = unary_stage3_mask(reprs, tensor, op=op, mask=mask)(tensor, mask)
+        tensor = unary_stage3_mask(reprs, tensor, op=op, mask=mask, kwargs=kwargs)(tensor, mask)
     else:
-        tensor = unary_stage3(reprs, tensor, op=op)(tensor)
+        tensor = unary_stage3(reprs, tensor, op=op, kwargs=kwargs)(tensor)
     return tensor
 
 
@@ -143,6 +147,7 @@ def cumsum(
         op="cumsum",
         mask=mask,
         cse=cse,
+        kwargs=tlib.ops.util.dict(reverse=reverse),
     )
 
 
@@ -158,9 +163,10 @@ def cumprod(
     return unary(
         description,
         tensor,
-        op="cumsum",
+        op="cumprod",
         mask=mask,
         cse=cse,
+        kwargs=tlib.ops.util.dict(reverse=reverse),
     )
 
 
@@ -209,6 +215,7 @@ def sort(
         tensor,
         op="sort",
         cse=cse,
+        kwargs=tlib.ops.util.dict(descending=descending),
     )
 
 
@@ -216,7 +223,8 @@ def sort(
 def associative_scan(
     description: tl.constexpr,
     tensor: tl.tensor,
-    combine_fn: tl.constexpr,
+    combine_fn,
+    reverse: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     """Specialization of :func:`tlib.unary` with ``op="sort"``"""
@@ -225,4 +233,5 @@ def associative_scan(
         tensor,
         op="associative_scan",
         cse=cse,
+        kwargs=tlib.ops.util.dict(combine_fn=combine_fn, reverse=reverse),
     )
