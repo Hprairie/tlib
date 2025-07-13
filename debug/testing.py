@@ -17,9 +17,8 @@ def my_kernel(
     LENGHT: tl.constexpr,
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    # x = tl.associative_scan(x, combine_fn=add, axis=1)
-    x = tlib.associative_scan("a [b]", x, combine_fn=add)
-    # x = tlib.sort("a [b]", x)
+    # x = tlib.sort("a [b]", x, descending=True)
+    x = tlib.binary("a b, a b", (x, x), "add")
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)

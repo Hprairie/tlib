@@ -228,6 +228,7 @@ def associative_scan(
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     """Specialization of :func:`tlib.unary` with ``op="sort"``"""
+    tl.static_assert(False, "Not working right now")
     return unary(
         description,
         tensor,

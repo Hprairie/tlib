@@ -60,6 +60,10 @@ def softmax(
 
 
 @triton.jit
+def log_softmax(input, axis=None, mask: tl.tensor | None = None) -> tl.tensor: ...
+
+
+@triton.jit
 def sort(
     input: tl.tensor,
     axis: tl.constexpr | None = None,
