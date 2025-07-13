@@ -4,7 +4,7 @@
 
 Triton Lib (`tlib`) is an expansion on triton-lang's frontend. Tlib is written purely in python and is compatibable within functions decorated with `@triton.jit`, building off of [einx's](https://github.com/fferflo/einx) syntax and compiler with a few major changes to enable compatability with triton. This means that all functions are dynamically generated and then compiled with python's `exec()` during triton's compile-time, creating no bottlenecks during kernel runtime.
 
-Tlib expands upon the triton frontend by providing APIs for common functions. For example triton doesn't come with built in `mean` and `var` functions. Tlib adds these functions and more! Furthermore tlib will most likely also be adding a `nn` library which comes with common functions for neural networks, excluding complicated algorithms (i.e., flash attention) which don't make sense to have as modular functions.
+Tlib expands upon the triton frontend by providing APIs for common functions. For example triton doesn't come with built in `mean` and `var` functions. Tlib adds these functions and more! The overall goal of tlib is to make kernel code even more readible. Even in torch and other frameworks, tools like einops and einx have been used to drastically improve the readibility of functions. Writing GPU code should be the same!
 
 # Installation
 
@@ -44,7 +44,7 @@ import triton_lib as tlib
 def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
     # We can use tlib.reduce and specify an op
-    out = tlib.reduce("a [b]", x, "add") # This is equivalent to tl.sum
+    out = tlib.reduce("a [b]", x, "sum") # This is equivalent to tl.sum
     # Or we can use built in functions
     out = tlib.sum("a [b]", x)
 ```
@@ -60,11 +60,9 @@ Being added soon!
 
 # Why create/use Tlib
 
-I will discuss, both `ops`, `functional`, and `nn` libraries added in tlib. Adding einstein notation `ops` to triton seemed like a no brainer. The readability of einstein notation in other high level frameworks such as torch, tensorfloew, jax, etc., makes it an incredibly appealing tool. Porting this functionality to triton, where we can evalue each expression at compile time convert it directly to `tl` syntax, makes it have features of high level abstractions without the performace reduction created by them.
+I will discuss, both `ops` and `functional` libraries added in tlib. Adding einstein notation `ops` to triton seemed like a no brainer. The readability of einstein notation in other high level frameworks such as torch, tensorfloew, jax, etc., makes it an incredibly appealing tool. Porting this functionality to triton, where we can evalue each expression at compile time convert it directly to `tl` syntax, makes it have features of high level abstractions without the performace reduction created by them.
 
 Furthermore, on my quest to improve readability, I strongly desired to expand on the functionality of `tl` base language. I really desired to have the same functionality as torch but in triton. The best way to do this was to implement standard `triton.jit` functions for new functional values.
-
-Now why use `nn` library of tlib? Honestly, the `nn` library is much more niche, however, what excites me about this functionality is that it should allow much more drag and dropable functionality to triton. When fusing layernorm and skip-connections, why rewrite a layernorm kernel from scratch when you can just call it like `tlnn.layernorm`?
 
 # Misc
 
@@ -72,8 +70,10 @@ This section will eventually be moved, but outlined are the current roadmap for 
 
 ### Roadmap
 
-- [ ] Implement `rearrange`, `reduce`, `element-by-element`, and `dot` einstein notation ops
+- [x] Implement `rearrange`, `reduce`, `unary`, and `binary` einstein notation ops
 - [ ] Add testing suite to `tlib`
 - [x] Improve the number of reductions and built in operations (i.e., `var`, `mean`, etc.)
+- [ ] Implement `dot` einstein notation ops
+- [ ] Implement more useful binary and unary ops such as `softmax`, `kl_div`, `cross_entrop` into einstein notation ops
 
 ### Limitations of Triton Lib
