@@ -51,12 +51,47 @@ def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
 
 ### Unary VMAP
 
-Tlib supports unary operations performed on a single tensor. Being added soon!
+Tlib supports unary operations performed on a single tensor. This include most scans.
 
+```python
+import triton
+import triton.language as tl
+import triton_lib as tlib
+
+@triton.jit
+def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
+    x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
+    # We can use tlib.binary and specify an op
+    out = tlib.unary("a [b]", x, "cumsum") # This is equivalent to tl.cumsum on axis=1
+    # Or we can use built in functions
+    out = tlib.cumsum("a [b]", x)
+```
 
 ### Binary VMAP
 
-Being added soon!
+Tlib supports unary operations performed between several tensors tensor. This makes broadcasting simpler. 
+
+```python
+import triton
+import triton.language as tl
+import triton_lib as tlib
+
+@triton.jit
+def my_kernel(x_ptr, y_ptr, o_ptr, LENGTH: tl.constexpr):
+    x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
+    y = tl.load(y_ptr + tl.arange(0, LENGTH))
+    # We can use tlib.binary and specify an op
+    out = tlib.binary("a b, a", (x, y), "add")
+    # Or we can use built in functions
+    out = tlib.add("a b, a", (x, y))
+    # Or equivalently in pure triton
+    out = x + y[:, None]
+```
+
+
+### Dot VMAP
+
+We can also use einstin notation to specify dot products. Coming soon!
 
 # Why create/use Tlib
 
