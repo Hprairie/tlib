@@ -14,6 +14,8 @@ Tlib expands upon the triton frontend by providing APIs for common functions. Fo
 pip install -e .
 ```
 
+When the latest triton and torch wheels come out in August I will create a pypi package for Tlib.
+
 # Ops Examples
 
 Just like every other einstein notation library, `tlib` comes with fundemental ops such as `rearrange` and `reduce`. 
