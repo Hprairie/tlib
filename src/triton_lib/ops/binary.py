@@ -463,3 +463,48 @@ def minimum(
         op="minimum",
         cse=cse,
     )
+
+
+@triton.jit
+def kl_div(
+    description: tl.constexpr,
+    tensors,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.binary` with ``op="kl_div"``"""
+    return binary(
+        description,
+        tensors,
+        op="kl_div",
+        cse=cse,
+    )
+
+
+@triton.jit
+def cross_entropy(
+    description: tl.constexpr,
+    tensors,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.binary` with ``op="cross_entropy"``"""
+    return binary(
+        description,
+        tensors,
+        op="cross_entropy",
+        cse=cse,
+    )
+
+
+@triton.jit
+def mse(
+    description: tl.constexpr,
+    tensors,
+    cse: tl.constexpr = True,
+) -> tl.tensor:
+    """Specialization of :func:`tlib.binary` with ``op="mse"``"""
+    return binary(
+        description,
+        tensors,
+        op="mse",
+        cse=cse,
+    )

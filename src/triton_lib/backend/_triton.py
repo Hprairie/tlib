@@ -50,6 +50,9 @@ def create():
         not_equal = op.elementwise(ttl.not_equal)
         maximum = associative_binary_to_nary(op.elementwise(ttl.maximum))
         minimum = associative_binary_to_nary(op.elementwise(ttl.minimum))
+        kl_div = op.elementwise(ttl.kl_div)
+        mse = op.elementwise(ttl.mse)
+        cross_entropy = op.elementwise(ttl.cross_entropy)
 
         sum = op.reduce(ttl.sum)
         mean = op.reduce(ttl.mean)
