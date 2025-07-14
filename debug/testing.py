@@ -18,7 +18,7 @@ def my_kernel(
 ):
     x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
     # x = tlib.sort("a [b]", x, descending=True)
-    x = tlib.binary("a b, a b", (x, x), "add")
+    x = tlib.dot("a b, c b -> a c", (x, x))
     # x = tlib.sum("a [b]", x)
     # x = tlib.rearrange("a, c -> (a + c)", (x, x))
     tl.store(o_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :], x)
