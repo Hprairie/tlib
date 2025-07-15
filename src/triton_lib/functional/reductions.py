@@ -95,12 +95,11 @@ def prod(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.reduce(tl.where(mask, input.to(dtype), 1), axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
+        return tl.reduce(tl.where(mask, input, 1), axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
     else:
-        return tl.reduce(input.to(dtype), axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
+        return tl.reduce(input, axis=axis, combine_fn=_prod_reduce, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -128,14 +127,11 @@ def any(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.reduce(tl.where(mask, input != 0, False), axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims).to(
-            dtype=dtype
-        )
+        return tl.reduce(tl.where(mask, input != 0, False), axis=axis, combine_fn=_any_reduce, keep_dims=keep_dim)
     else:
-        return tl.reduce(input != 0, axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.reduce(input != 0, axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -149,14 +145,11 @@ def all(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.reduce(tl.where(mask, input != 0, True), axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims).to(
-            dtype=dtype
-        )
+        return tl.reduce(tl.where(mask, input != 0, True), axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims)
     else:
-        return tl.reduce(input != 0, axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.reduce(input != 0, axis=axis, combine_fn=_all_reduce, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -165,12 +158,11 @@ def min(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     if tl.constexpr(mask is not None):
-        return tl.min(tl.where(mask, input.to(dtype=dtype), float("inf")), axis=axis, keep_dims=keep_dims)
+        return tl.min(tl.where(mask, input, float("inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.min(input.to(dtype=dtype), axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        return tl.min(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -218,14 +210,13 @@ def logsumexp(
     axis: tl.constexpr | None = None,
     mask: tl.tensor | None = None,
     keep_dims: tl.constexpr = False,
-    dtype: core.constexpr | None = None,
 ):
     """If a mask is used, then unknown behaviour/values in masked values (i.e., index marked as false)"""
     if tl.constexpr(mask is not None):
-        input = tl.log(input.to(dtype=dtype))
+        input = tl.log(input)
         input = tl.sum(tl.where(mask, input, 0), axis=axis, keep_dims=keep_dims)
         return tl.exp(input)
     else:
-        input = tl.log(input.to(dtype=dtype))
-        input = tl.sum(input, axis=axis, keep_dims=keep_dims).to(dtype=dtype)
+        input = tl.log(input)
+        input = tl.sum(input, axis=axis, keep_dims=keep_dims)
         return tl.exp(input)
