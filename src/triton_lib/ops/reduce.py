@@ -356,7 +356,7 @@ def argmax(
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
-    """Specialization of :func:`tlib.reduce` with ``op="max"``"""
+    """Specialization of :func:`tlib.reduce` with ``op="argmax"``"""
     return reduce(description, tensor, op="argmax", mask=mask, keepdims=keepdims, cse=cse)
 
 
@@ -368,7 +368,7 @@ def argmin(
     keepdims: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
-    """Specialization of :func:`tlib.reduce` with ``op="min"``"""
+    """Specialization of :func:`tlib.reduce` with ``op="argmin"``"""
     return reduce(description, tensor, op="argmin", mask=mask, keepdims=keepdims, cse=cse)
 
 
