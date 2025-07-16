@@ -72,6 +72,13 @@ def sort(
     return tl.sort(input, dim=axis, descending=descending)  # Why does triton have dim and not axis for this, so dumb
 
 
+@tl.constexpr_function
+def printing(vals):
+    import pdb
+
+    pdb.set_trace()
+
+
 @triton.jit
 def associative_scan(
     input: tl.tensor,
@@ -79,5 +86,5 @@ def associative_scan(
     axis: tl.constexpr | None = None,
     reverse: tl.constexpr = False,
 ) -> tl.tensor:
-    tl.static_print(combine_fn)
-    return tl.associative_scan(input, axis=axis, combine_fn=combine_fn, reverse=reverse)
+    printing(combine_fn)
+    return tl.associative_scan(input, axis, combine_fn, reverse=reverse)
