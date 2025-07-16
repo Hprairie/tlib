@@ -8,7 +8,7 @@ Tlib expands upon the triton frontend by providing APIs for common functions. Fo
 
 # Installation
 
-> WARNING: Currently requires Triton from source and torch 2.7.1
+> WARNING: Currently requires Triton from source and torch 2.7.1, waiting for Triton 3.4.0 wheels and then will create PyPi package.
 
 ```bash
 pip install -e .
@@ -30,7 +30,10 @@ import triton_lib as tlib
 @triton.jit
 def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     x = tl.load(x_ptr + tl.arange(0, LENGTH)[:, None] * LENGTH + tl.arange(0, LENGTH)[None, :])
-    x = tlib.rearrange("a b -> b a", x) # This is equivalent to tl.trans
+    # We can use rearrange to perform inbuilt triton shape manipulation ops
+    out = tlib.rearrange("a b -> b a", x) # This is equivalent to tl.trans
+    # Or equivalently in pure triton
+    out = tl.trans(x, (1, 0))
 ```
 
 ### Reduce
@@ -49,6 +52,8 @@ def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     out = tlib.reduce("a [b]", x, "sum") # This is equivalent to tl.sum
     # Or we can use built in functions
     out = tlib.sum("a [b]", x)
+    # Or equivalently in pure triton
+    out = tl.sum(x, axis=1)
 ```
 
 ### Unary VMAP
@@ -67,6 +72,8 @@ def my_kernel(x_ptr, o_ptr, LENGTH: tl.constexpr):
     out = tlib.unary("a [b]", x, "cumsum") # This is equivalent to tl.cumsum on axis=1
     # Or we can use built in functions
     out = tlib.cumsum("a [b]", x)
+    # Or equivalently in pure triton
+    out = tl.cumsum(x, axis=1)
 ```
 
 ### Binary VMAP
@@ -108,9 +115,14 @@ This section will eventually be moved, but outlined are the current roadmap for 
 ### Roadmap
 
 - [x] Implement `rearrange`, `reduce`, `unary`, and `binary` einstein notation ops
-- [ ] Add testing suite to `tlib`
+- [x] Add testing suite to `tlib`
 - [x] Improve the number of reductions and built in operations (i.e., `var`, `mean`, etc.)
 - [ ] Implement `dot` einstein notation ops
 - [ ] Implement more useful binary and unary ops such as `softmax`, `kl_div`, `cross_entrop` into einstein notation ops
-
+- [ ] Build a PyPi package
+- [ ] Create Documentation
+- [ ] Add testing to rearrange ops in `tlib`
+- [x] Add testing to unary ops in `tlib`
+- [x] Add testing to reduce ops in `tlib`
+- [ ] Fix associative scan operation in `tlib`
 ### Limitations of Triton Lib
