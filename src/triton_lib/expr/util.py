@@ -41,10 +41,7 @@ class CallSignature:
         for expr in exprs:
             if expr is not None:
                 for expr in expr.all():
-                    if (
-                        isinstance(expr, (stage1.NamedAxis, stage2.NamedAxis, stage3.Axis))
-                        and expr.name in axisnames
-                    ):
+                    if isinstance(expr, (stage1.NamedAxis, stage2.NamedAxis, stage3.Axis)) and expr.name in axisnames:
                         pos.extend(range(expr.begin_pos, expr.end_pos))
         assert all(p >= 0 and p < len(self.text) for p in pos), f"{pos}"
         return pos
@@ -91,9 +88,7 @@ class SyntaxError(Exception):
             self.pos = list(pos)
         self.expression = expression
         self.message = f'{message}\nExpression: "{self.expression}"\n'
-        self.message += " " * 13 + "".join([
-            ("^" if i in self.pos else " ") for i in range(len(self.expression))
-        ])
+        self.message += " " * 13 + "".join([("^" if i in self.pos else " ") for i in range(len(self.expression))])
         if post_message is not None:
             self.message += f"\n{post_message}"
         assert all(p >= 0 and p < len(self.expression) for p in self.pos)
@@ -130,9 +125,7 @@ class DimensionError(Exception):
             self.message = f'{message}\nExpression: "{self.text}"'
             if len(self.pos) > 0:
                 self.message += (
-                    "\n"
-                    + " " * 13
-                    + "".join([("^" if i in self.pos else " ") for i in range(len(self.text))])
+                    "\n" + " " * 13 + "".join([("^" if i in self.pos else " ") for i in range(len(self.text))])
                 )
             if constraints is not None:
                 self.message += f"\n{constraints}"
@@ -161,9 +154,7 @@ def _get_expansion(expr):
 
 
 def _input_expr(expr):
-    if expr is None or isinstance(
-        expr, (str, stage1.Expression, stage2.Expression, stage3.Expression)
-    ):
+    if expr is None or isinstance(expr, (str, stage1.Expression, stage2.Expression, stage3.Expression)):
         return expr
     else:
         if isinstance(expr, np.ndarray):
@@ -315,12 +306,10 @@ def solve(
     exprs2 = [(stage1.parse_arg(expr) if isinstance(expr, str) else expr) for expr in exprs2]
 
     expansions1 = [
-        expansion if expansion is not None else _get_expansion(expr)
-        for expansion, expr in zip(expansions1, exprs1)
+        expansion if expansion is not None else _get_expansion(expr) for expansion, expr in zip(expansions1, exprs1)
     ]
     expansions2 = [
-        expansion if expansion is not None else _get_expansion(expr)
-        for expansion, expr in zip(expansions2, exprs2)
+        expansion if expansion is not None else _get_expansion(expr) for expansion, expr in zip(expansions2, exprs2)
     ]
 
     if verbose:

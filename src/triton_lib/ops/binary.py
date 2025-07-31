@@ -27,9 +27,6 @@ def binary_stage3(exprs, tensors_in, op, backend=None):
         else:
             return s
 
-    # import pdb
-
-    # pdb.set_trace()
     tensors_in = [
         tlib.tracer.call_factory(
             tensor,
