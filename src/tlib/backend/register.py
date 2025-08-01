@@ -1,5 +1,5 @@
 import sys
-import triton_lib as tlib
+import tlib
 import threading
 import importlib
 import numpy as np
@@ -34,9 +34,7 @@ def register_for_module(module_name, backend_factory):
 def register(backend):
     with lock:
         if not isinstance(backend, (Backend, InvalidBackend)):
-            raise ValueError(
-                "Backend must be an instance of tlib.backend.Backend or tlib.backend.InvalidBackend"
-            )
+            raise ValueError("Backend must be an instance of tlib.backend.Backend or tlib.backend.InvalidBackend")
         backends.append(backend)
         for type in backend.tensor_types:
             tensortype_to_backend[type] = backend
@@ -77,9 +75,7 @@ def _get1(tensor):
     _update()
 
     for backend in backends:
-        if any(isinstance(tensor, type) for type in backend.tensor_types) and not isinstance(
-            tensor, np.ndarray
-        ):
+        if any(isinstance(tensor, type) for type in backend.tensor_types) and not isinstance(tensor, np.ndarray):
             # Found matching backend
             break
     else:
@@ -107,15 +103,9 @@ def get(arg):
                 if tensor is not None:
                     backend2 = _get1(tensor)
                     if backend2 is not None:
-                        if (
-                            backend is not None
-                            and backend != backend2
-                            and backend != numpy
-                            and backend2 != numpy
-                        ):
+                        if backend is not None and backend != backend2 and backend != numpy and backend2 != numpy:
                             raise ValueError(
-                                "Got tensors with conflicting backends: "
-                                f"{backend.__name__} and {backend2.__name__}"
+                                "Got tensors with conflicting backends: " f"{backend.__name__} and {backend2.__name__}"
                             )
                         if backend is None or backend2 != numpy:
                             backend = backend2

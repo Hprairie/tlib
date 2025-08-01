@@ -9,7 +9,7 @@ import triton.language as tl
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from triton._internal_testing import is_interpreter
 
-import triton_lib as tlib
+import tlib
 
 try:
     import pytest

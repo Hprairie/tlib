@@ -1,8 +1,8 @@
-import triton_lib as tlib
+import tlib
 import functools
 import threading
 import numpy as np
-from triton_lib.tracer.tensor import op
+from tlib.tracer.tensor import op
 
 
 def associative_binary_to_nary(binary_op):
@@ -121,10 +121,7 @@ class Backend:
             x_max_keepdims,
             tuple(s for i, s in enumerate(x_max_keepdims.shape) if i not in axis),
         )
-        return (
-            backend.log(backend.sum(backend.exp(x - x_max_keepdims), axis=axis, keepdims=False))
-            + x_max_dropdims
-        )
+        return backend.log(backend.sum(backend.exp(x - x_max_keepdims), axis=axis, keepdims=False)) + x_max_dropdims
 
     @classmethod
     @tlib.trace

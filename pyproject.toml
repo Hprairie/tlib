@@ -1,5 +1,5 @@
 [project]
-name = "triton-lib"
+name = "tlib"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -22,14 +22,14 @@ test = [
     "pytest-benchmark>=4.0.0",
 ]
 dev = [
-    "triton-lib[test]",
+    "tlib[test]",
     "black>=24.0.0",
     "ruff>=0.1.0",
     "pre-commit>=3.0.0",
 ]
 
 [project.scripts]
-triton-lib = "triton_lib:main"
+tlib = "tlib:main"
 
 [build-system]
 requires = ["hatchling"]

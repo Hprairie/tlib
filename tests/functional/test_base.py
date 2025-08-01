@@ -4,7 +4,7 @@ import pytest
 import torch
 import triton
 import triton.language as tl
-import triton_lib.functional as tlf
+import tlib.functional as tlf
 from tests.test_base import BaseTritonTest
 
 

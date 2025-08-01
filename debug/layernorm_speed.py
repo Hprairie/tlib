@@ -1,8 +1,8 @@
 import torch
 import triton
 import triton.language as tl
-import triton_lib as tlib
-import triton_lib.nn as tlnn
+import tlib
+import tlib.nn as tlnn
 
 
 def is_hip() -> bool:

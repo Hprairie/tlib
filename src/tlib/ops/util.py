@@ -1,5 +1,5 @@
 import builtins
-import triton_lib as tlib
+import tlib
 import numpy as np
 
 import triton.language as tl

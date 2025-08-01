@@ -1,8 +1,8 @@
 import torch
 import triton
 import triton.language as tl
-import triton_lib as tlib
-import triton_lib.functional as tlf
+import tlib
+import tlib.functional as tlf
 
 
 @triton.jit

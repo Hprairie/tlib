@@ -1,5 +1,5 @@
 import triton
-import triton_lib as tlib
+import tlib
 import triton.language as tl
 
 from . import util

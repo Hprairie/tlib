@@ -1,8 +1,8 @@
 import triton
 import triton.language as tl
 
-import triton_lib as tlib
-from triton_lib.ops.vmap_with_axis import vmap_with_axis_stage3
+import tlib
+from tlib.ops.vmap_with_axis import vmap_with_axis_stage3
 
 
 @tl.constexpr_function

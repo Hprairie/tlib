@@ -1,6 +1,6 @@
 from . import stage1, stage2, stage3
 import numpy as np
-import triton_lib as tlib
+import tlib
 
 
 def idx_to_ordinal(idx):

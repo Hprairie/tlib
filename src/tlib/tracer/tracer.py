@@ -1,4 +1,4 @@
-import triton_lib as tlib
+import tlib
 import inspect
 from functools import partial
 import threading
@@ -205,9 +205,7 @@ class Function(Tracer):
 
 
 class TracableFunction(Tracer):
-    def __init__(
-        self, func=None, args=None, kwargs=None, virtual_args=None, output=None, name=None
-    ):
+    def __init__(self, func=None, args=None, kwargs=None, virtual_args=None, output=None, name=None):
         if virtual_args is None:
             virtual_args = []
         Tracer.__init__(self)
@@ -234,9 +232,7 @@ class TracableFunction(Tracer):
 
     def __call__(self, *args, **kwargs):
         if self.func is None:
-            raise NotImplementedError(
-                "Cannot call a TracableFunction that was created without a callable function"
-            )
+            raise NotImplementedError("Cannot call a TracableFunction that was created without a callable function")
         return self.func(*args, **kwargs)
 
 

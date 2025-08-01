@@ -1,7 +1,7 @@
 from . import stage2, solver
 import numpy as np
 from functools import partial
-import triton_lib as tlib
+import tlib
 
 
 class Expression:
@@ -179,8 +179,7 @@ class Concatenation(Expression):
         for c in children:
             if len(c) != 1:
                 raise ValueError(
-                    "Concatenation can only be used on expressions of length 1, but"
-                    f"got expression '{c}'"
+                    "Concatenation can only be used on expressions of length 1, but" f"got expression '{c}'"
                 )
             c.parent = self
 
@@ -194,9 +193,7 @@ class Concatenation(Expression):
         yield self
 
     def __deepcopy__(self):
-        return Concatenation(
-            [c.__deepcopy__() for c in self.children], self.begin_pos, self.end_pos
-        )
+        return Concatenation([c.__deepcopy__() for c in self.children], self.begin_pos, self.end_pos)
 
     def __eq__(self, other):
         return isinstance(other, Concatenation) and self.children == other.children
@@ -244,9 +241,7 @@ class Marker(Expression):
 def solve(exprs1, exprs2, descs1, descs2, signature=None):
     exprs1 = list(exprs1)
     exprs2 = list(exprs2)
-    if any(
-        expr is not None and not isinstance(expr, stage2.Expression) for expr in exprs1 + exprs2
-    ):
+    if any(expr is not None and not isinstance(expr, stage2.Expression) for expr in exprs1 + exprs2):
         raise ValueError("Can only expand stage2.Expression")
     if len(exprs1) != len(exprs2):
         raise ValueError("Number of expressions must be equal")
@@ -257,49 +252,57 @@ def solve(exprs1, exprs2, descs1, descs2, signature=None):
     for root in exprs1 + exprs2:
         if root is not None:
             for expr in root.all():
-                symbolic_expr_values[id(expr)] = solver.Variable(
-                    f"symbolic_expr_values[{id(expr)}]", str(expr)
-                )
+                symbolic_expr_values[id(expr)] = solver.Variable(f"symbolic_expr_values[{id(expr)}]", str(expr))
 
     # Add equations: Relations between expressions and their children
     for root in exprs1 + exprs2:
         if root is not None:
             for expr in root.all():
                 if isinstance(expr, stage2.List):
-                    equations.append((
-                        solver.Product([symbolic_expr_values[id(c)] for c in expr.children]),
-                        symbolic_expr_values[id(expr)],
-                    ))
+                    equations.append(
+                        (
+                            solver.Product([symbolic_expr_values[id(c)] for c in expr.children]),
+                            symbolic_expr_values[id(expr)],
+                        )
+                    )
                 elif isinstance(expr, stage2.Concatenation):
-                    equations.append((
-                        solver.Sum([symbolic_expr_values[id(c)] for c in expr.children]),
-                        symbolic_expr_values[id(expr)],
-                    ))
+                    equations.append(
+                        (
+                            solver.Sum([symbolic_expr_values[id(c)] for c in expr.children]),
+                            symbolic_expr_values[id(expr)],
+                        )
+                    )
                 elif isinstance(expr, stage2.Marker) or isinstance(expr, stage2.Composition):
-                    equations.append((
-                        symbolic_expr_values[id(expr)],
-                        symbolic_expr_values[id(expr.inner)],
-                    ))
+                    equations.append(
+                        (
+                            symbolic_expr_values[id(expr)],
+                            symbolic_expr_values[id(expr.inner)],
+                        )
+                    )
 
     # Add equations: Same root values
     for root1, root2 in zip(exprs1, exprs2):
         if root1 is not None and root2 is not None:
             assert len(root1) == len(root2)
             for expr1, expr2 in zip(root1, root2):
-                equations.append((
-                    symbolic_expr_values[id(expr1)],
-                    symbolic_expr_values[id(expr2)],
-                ))
+                equations.append(
+                    (
+                        symbolic_expr_values[id(expr1)],
+                        symbolic_expr_values[id(expr2)],
+                    )
+                )
 
     # Add equations: Unnamed axes
     for root in exprs1 + exprs2:
         if root is not None:
             for expr in root.all():
                 if isinstance(expr, stage2.UnnamedAxis):
-                    equations.append((
-                        symbolic_expr_values[id(expr)],
-                        int(expr.value),
-                    ))
+                    equations.append(
+                        (
+                            symbolic_expr_values[id(expr)],
+                            int(expr.value),
+                        )
+                    )
 
     # Add equations: Multiple occurrences of the same named axis must have the same value
     sympy_axis_values = {}
@@ -308,13 +311,13 @@ def solve(exprs1, exprs2, descs1, descs2, signature=None):
             for axis in root.all():
                 if isinstance(axis, stage2.NamedAxis):
                     if axis.name not in sympy_axis_values:
-                        sympy_axis_values[axis.name] = solver.Variable(
-                            f"sympy_axis_values[{axis.name}]", axis.name
+                        sympy_axis_values[axis.name] = solver.Variable(f"sympy_axis_values[{axis.name}]", axis.name)
+                    equations.append(
+                        (
+                            symbolic_expr_values[id(axis)],
+                            sympy_axis_values[axis.name],
                         )
-                    equations.append((
-                        symbolic_expr_values[id(axis)],
-                        sympy_axis_values[axis.name],
-                    ))
+                    )
 
     # Solve
     def solve(equations):
@@ -357,9 +360,7 @@ def solve(exprs1, exprs2, descs1, descs2, signature=None):
                 "provide more constraints.",
                 text=signature.text,
                 constraints=[
-                    (expr1, expr2)
-                    for expr1, expr2 in zip(exprs1, exprs2)
-                    if expr1 is not None and expr2 is not None
+                    (expr1, expr2) for expr1, expr2 in zip(exprs1, exprs2) if expr1 is not None and expr2 is not None
                 ],
             ) from e
         else:
@@ -370,20 +371,15 @@ def solve(exprs1, exprs2, descs1, descs2, signature=None):
                 text=signature.text,
                 pos=signature.get_pos_for_axisnames(exprs1 + exprs2, axis_names),
                 constraints=[
-                    (expr1, expr2)
-                    for expr1, expr2 in zip(exprs1, exprs2)
-                    if expr1 is not None and expr2 is not None
+                    (expr1, expr2) for expr1, expr2 in zip(exprs1, exprs2) if expr1 is not None and expr2 is not None
                 ],
             ) from e
     except solver.SolveExceptionNoSolution as e:
         raise tlib.DimensionError(
-            "Failed to determine the size of all axes in the expression under the given "
-            "constraints.",
+            "Failed to determine the size of all axes in the expression under the given " "constraints.",
             text=signature.text,
             constraints=[
-                (expr1, expr2)
-                for expr1, expr2 in zip(exprs1, exprs2)
-                if expr1 is not None and expr2 is not None
+                (expr1, expr2) for expr1, expr2 in zip(exprs1, exprs2) if expr1 is not None and expr2 is not None
             ],
         ) from e
 
@@ -398,9 +394,7 @@ def solve(exprs1, exprs2, descs1, descs2, signature=None):
         elif isinstance(expr, stage2.List):
             return List([map(child) for child in expr.children], expr.begin_pos, expr.end_pos)
         elif isinstance(expr, stage2.Concatenation):
-            return Concatenation(
-                [map(child) for child in expr.children], expr.begin_pos, expr.end_pos
-            )
+            return Concatenation([map(child) for child in expr.children], expr.begin_pos, expr.end_pos)
         elif isinstance(expr, stage2.Marker):
             return Marker(map(expr.inner), expr.begin_pos, expr.end_pos)
         elif isinstance(expr, stage2.Composition):
@@ -504,26 +498,18 @@ def remove(expr, pred):
 def remove_unnamed_trivial_axes(expr):
     def is_concat_child(expr):  # Do not remove direct children of concatenations
         return expr.parent is not None and (
-            isinstance(expr.parent, Concatenation)
-            or (isinstance(expr.parent, Marker) and is_concat_child(expr.parent))
+            isinstance(expr.parent, Concatenation) or (isinstance(expr.parent, Marker) and is_concat_child(expr.parent))
         )
 
     return remove(
         expr,
-        lambda expr: isinstance(expr, Axis)
-        and expr.is_unnamed
-        and expr.value == 1
-        and not is_concat_child(expr),
+        lambda expr: isinstance(expr, Axis) and expr.is_unnamed and expr.value == 1 and not is_concat_child(expr),
     )
 
 
 @expr_map
 def mark(expr, pred):
-    if (
-        not isinstance(expr, Marker)
-        and (expr.parent is None or not isinstance(expr.parent, Marker))
-        and pred(expr)
-    ):
+    if not isinstance(expr, Marker) and (expr.parent is None or not isinstance(expr.parent, Marker)) and pred(expr):
         return Marker(expr.__deepcopy__()), expr_map.REPLACE_AND_CONTINUE
 
 
@@ -548,10 +534,7 @@ def is_at_root(expr):
 
 
 def is_flat(expr):
-    return all(
-        not isinstance(expr, Composition) and not isinstance(expr, Concatenation)
-        for expr in expr.all()
-    )
+    return all(not isinstance(expr, Composition) and not isinstance(expr, Concatenation) for expr in expr.all())
 
 
 def get_axes(expr):

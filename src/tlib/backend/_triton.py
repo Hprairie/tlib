@@ -1,9 +1,9 @@
 from .base import Backend, associative_binary_to_nary
-import triton_lib.tracer as tracer
-from triton_lib.tracer.tensor import op
+import tlib.tracer as tracer
+from tlib.tracer.tensor import op
 import triton
 import triton.language as tl
-import triton_lib as tlib
+import tlib
 import types
 from functools import partial
 

@@ -1,7 +1,7 @@
 from collections import defaultdict
 import re
 import uuid
-import triton_lib as tlib
+import tlib
 
 
 class Expression:
@@ -218,9 +218,7 @@ class Concatenation(Expression):
         return " + ".join([str(c) for c in self.children])
 
     def __deepcopy__(self):
-        return Concatenation(
-            [c.__deepcopy__() for c in self.children], self.begin_pos, self.end_pos
-        )
+        return Concatenation([c.__deepcopy__() for c in self.children], self.begin_pos, self.end_pos)
 
     def __eq__(self, other):
         return isinstance(other, Concatenation) and self.children == other.children
@@ -550,9 +548,11 @@ def parse_op(text):
                         operands.append(
                             TokenList(
                                 current_operand_tokens,
-                                current_operand_tokens[0].begin_pos
-                                if len(current_operand_tokens) > 0
-                                else token.begin_pos,
+                                (
+                                    current_operand_tokens[0].begin_pos
+                                    if len(current_operand_tokens) > 0
+                                    else token.begin_pos
+                                ),
                             )
                         )
                         current_operand_tokens = []
@@ -561,9 +561,7 @@ def parse_op(text):
                 operands.append(
                     TokenList(
                         current_operand_tokens,
-                        current_operand_tokens[0].begin_pos
-                        if len(current_operand_tokens) > 0
-                        else token.end_pos,
+                        current_operand_tokens[0].begin_pos if len(current_operand_tokens) > 0 else token.end_pos,
                     )
                 )
                 if nary_op == " ":
@@ -582,11 +580,7 @@ def parse_op(text):
                     op = Args
                 elif nary_op == "+":
                     op = Concatenation
-                    invalid_operands = [
-                        o
-                        for o in operands
-                        if not isinstance(o, (NamedAxis, UnnamedAxis, Composition))
-                    ]
+                    invalid_operands = [o for o in operands if not isinstance(o, (NamedAxis, UnnamedAxis, Composition))]
                     if len(invalid_operands) > 0:
                         pos = []
                         for operand in invalid_operands:
@@ -627,14 +621,10 @@ def parse_op(text):
             if value.isdigit():
                 return UnnamedAxis(int(value), in_tokens[0].begin_pos, in_tokens[0].end_pos)
             else:
-                assert _axis_name.fullmatch(in_tokens[0].text), (
-                    f"Invalid axis name: {in_tokens[0].text}"
-                )
+                assert _axis_name.fullmatch(in_tokens[0].text), f"Invalid axis name: {in_tokens[0].text}"
                 return NamedAxis(value, in_tokens[0].begin_pos, in_tokens[0].end_pos)
 
-        message = (
-            f"The expression '{text[in_tokens[0].begin_pos : in_tokens[-1].end_pos]}' is not valid."
-        )
+        message = f"The expression '{text[in_tokens[0].begin_pos : in_tokens[-1].end_pos]}' is not valid."
         if len(in_tokens) > 1:
             message += " Are you maybe missing a whitespace?"
         raise tlib.SyntaxError(text, range(in_tokens[0].begin_pos, in_tokens[-1].end_pos), message)
@@ -664,10 +654,7 @@ def parse_op(text):
         elif isinstance(expr, Ellipsis):
             op = move_up(expr.inner)
             return Op(
-                [
-                    Ellipsis.maybe(arglist, expr.begin_pos, expr.end_pos, expr.ellipsis_id)
-                    for arglist in op.children
-                ],
+                [Ellipsis.maybe(arglist, expr.begin_pos, expr.end_pos, expr.ellipsis_id) for arglist in op.children],
                 op.begin_pos,
                 op.end_pos,
             )
@@ -731,10 +718,7 @@ def parse_op(text):
         elif isinstance(expr, Ellipsis):
             args = move_up(expr.inner)
             return Args(
-                [
-                    Ellipsis.maybe(arg, expr.begin_pos, expr.end_pos, expr.ellipsis_id)
-                    for arg in args.children
-                ],
+                [Ellipsis.maybe(arg, expr.begin_pos, expr.end_pos, expr.ellipsis_id) for arg in args.children],
                 args.begin_pos,
                 args.end_pos,
             )
@@ -776,9 +760,7 @@ def parse_op(text):
             raise AssertionError()
 
     assert isinstance(expression, Op)
-    expression = Op(
-        [move_up(c) for c in expression.children], expression.begin_pos, expression.end_pos
-    )
+    expression = Op([move_up(c) for c in expression.children], expression.begin_pos, expression.end_pos)
 
     # ##### Semantic checks #####
 
@@ -856,10 +838,8 @@ def parse_op(text):
             raise tlib.SyntaxError(
                 text,
                 pos,
-                f"There are multiple occurrences of axis {axis_name} with inconsistent bracket "
-                "usage:",
-                post_message="An axis may only appear with brackets or without brackets, but not "
-                "both.",
+                f"There are multiple occurrences of axis {axis_name} with inconsistent bracket " "usage:",
+                post_message="An axis may only appear with brackets or without brackets, but not " "both.",
             )
 
     return expression

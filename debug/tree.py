@@ -1,8 +1,7 @@
 import torch
 import triton
 import triton.language as tl
-import triton_lib as tlib
-
+import tlib
 
 
 @triton.jit
@@ -14,7 +13,9 @@ def add(x_ptr, y_ptr, output_ptr, BLOCK_SIZE: tl.constexpr):
     x = tl.load(x_ptr + offsets, mask=mask)
     y = tl.load(y_ptr + offsets, mask=mask)
     # print("Hello", x.shape)
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
     x = x[None, :]
     x = tlib.ops.rearrange("h j -> j h", x)
     print("Mid", x.shape)
@@ -22,6 +23,7 @@ def add(x_ptr, y_ptr, output_ptr, BLOCK_SIZE: tl.constexpr):
     print("Done", x.shape)
     output = x + y
     tl.store(output_ptr + offsets, output, mask=mask)
+
 
 def add_vectors(x: torch.Tensor, y: torch.Tensor):
     BLOCK_SIZE = 32
@@ -31,8 +33,9 @@ def add_vectors(x: torch.Tensor, y: torch.Tensor):
     add[grid](x, y, output, BLOCK_SIZE=BLOCK_SIZE)
     return output
 
-if __name__ == '__main__':
-    x = torch.rand(size=(1024,), device='cuda', dtype=torch.float32)
-    y = torch.rand(size=(1024,), device='cuda', dtype=torch.float32)
+
+if __name__ == "__main__":
+    x = torch.rand(size=(1024,), device="cuda", dtype=torch.float32)
+    y = torch.rand(size=(1024,), device="cuda", dtype=torch.float32)
     output = add_vectors(x, y)
     print(output)

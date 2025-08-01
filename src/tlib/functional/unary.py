@@ -1,7 +1,7 @@
 import triton
 import triton.language as tl
 
-import triton_lib.functional as tlf
+import tlib.functional as tlf
 
 
 @triton.jit

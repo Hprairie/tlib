@@ -3,7 +3,7 @@
 import pytest
 import triton
 import triton.language as tl
-import triton_lib as tlib
+import tlib
 import torch
 from tests.test_base import BaseTritonTest
 

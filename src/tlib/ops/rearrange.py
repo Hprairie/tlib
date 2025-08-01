@@ -2,7 +2,7 @@ import triton
 import triton.language as tl
 import triton.language.core as tlc
 
-import triton_lib as tlib
+import tlib
 
 from typing import Union
 

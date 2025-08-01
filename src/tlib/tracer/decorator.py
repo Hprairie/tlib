@@ -1,6 +1,6 @@
 import functools
 import os
-import triton_lib as tlib
+import tlib
 import threading
 import frozendict
 import inspect

@@ -1,4 +1,4 @@
-import triton_lib as tlib
+import tlib
 import numpy as np
 from collections import defaultdict
 from typing import Mapping, Optional
@@ -7,9 +7,7 @@ import numpy.typing as npt
 
 @tlib.lru_cache
 def _solve(description, *tensor_shapes, cse=True, **parameters):
-    description, parameters = tlib.ops.util._clean_description_and_parameters(
-        description, parameters
-    )
+    description, parameters = tlib.ops.util._clean_description_and_parameters(description, parameters)
 
     exprs = tlib.expr.stage1.parse_args(description)
     if len(exprs) != len(tensor_shapes):
@@ -17,10 +15,7 @@ def _solve(description, *tensor_shapes, cse=True, **parameters):
 
     try:
         exprs = tlib.expr.solve(
-            [
-                tlib.expr.Equation(expr, tensor_shape)
-                for expr, tensor_shape in zip(exprs, tensor_shapes)
-            ]
+            [tlib.expr.Equation(expr, tensor_shape) for expr, tensor_shape in zip(exprs, tensor_shapes)]
             + [
                 tlib.expr.Equation(k, np.asarray(v)[..., np.newaxis], depth1=None, depth2=None)
                 for k, v in parameters.items()
@@ -74,14 +69,10 @@ def solve(
         >>> tlib.solve("a b", x)
         {'a': 10, 'b': 5}
     """
-    return _solve(
-        description, *[tlib.tracer.get_shape(tensor) for tensor in tensors], cse=cse, **parameters
-    )
+    return _solve(description, *[tlib.tracer.get_shape(tensor) for tensor in tensors], cse=cse, **parameters)
 
 
-def matches(
-    description: str, *tensors: tlib.Tensor, cse: bool = True, **parameters: npt.ArrayLike
-) -> bool:
+def matches(description: str, *tensors: tlib.Tensor, cse: bool = True, **parameters: npt.ArrayLike) -> bool:
     """Check whether the given expressions and tensors match.
 
     Args:
@@ -105,9 +96,7 @@ def matches(
 
 
 @tlib.traceback_util.filter
-def check(
-    description: str, *tensors: tlib.Tensor, cse: bool = True, **parameters: npt.ArrayLike
-) -> None:
+def check(description: str, *tensors: tlib.Tensor, cse: bool = True, **parameters: npt.ArrayLike) -> None:
     """Check whether the given expressions and tensors match and raise an exception if they don't.
 
     Args:
@@ -118,9 +107,7 @@ def check(
         **parameters: Additional parameters that specify values for single axes, e.g. ``a=4``.
     """
 
-    description, parameters = tlib.ops.util._clean_description_and_parameters(
-        description, parameters
-    )
+    description, parameters = tlib.ops.util._clean_description_and_parameters(description, parameters)
 
     exprs = tlib.expr.stage1.parse_args(description)
     if len(exprs) != len(tensors):

@@ -1,4 +1,4 @@
-import triton_lib as tlib
+import tlib
 from . import util
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 from . import tracer, tensor
-import triton_lib as tlib
+import tlib
 import inspect
 
 # Define classes for different types of inputs that act as cache keys and will

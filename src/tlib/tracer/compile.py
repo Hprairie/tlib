@@ -1,4 +1,4 @@
-import triton_lib as tlib
+import tlib
 from .tracer import *
 from .tensor import *
 from .optimize import optimize

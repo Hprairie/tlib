@@ -5,7 +5,7 @@ import torch
 from tests.test_base import BaseTritonTest, parametrize_dtypes, parametrize_shapes
 
 # Import when actually implementing tests
-# import triton_lib.functional as tlf
+# import tlib.functional as tlf
 
 
 class TestActivations(BaseTritonTest):

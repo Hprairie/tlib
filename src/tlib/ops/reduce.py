@@ -1,6 +1,6 @@
 import triton
 import triton.language as tl
-import triton_lib as tlib
+import tlib
 from . import util
 import numpy as np
 from functools import partial
