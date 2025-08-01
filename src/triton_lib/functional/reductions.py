@@ -232,10 +232,12 @@ def logsumexp(
 ):
     """If a mask is used, then unknown behaviour/values in masked values (i.e., index marked as false)"""
     if tl.constexpr(mask is not None):
-        input = tl.exp(input)
+        _max = max(input, axis=axis, mask=mask, keep_dims=keep_dims)
+        input = tl.exp(input - _max)
         input = tl.sum(tl.where(mask, input, 0), axis=axis, keep_dims=keep_dims)
-        return tl.log(input)
+        return _max + tl.log(input)
     else:
-        input = tl.exp(input)
+        _max = max(input, axis=axis, keep_dims=keep_dims)
+        input = tl.exp(input - _max)
         input = tl.sum(input, axis=axis, keep_dims=keep_dims)
-        return tl.log(input)
+        return _max + tl.log(input)
