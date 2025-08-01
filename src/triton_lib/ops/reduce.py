@@ -381,5 +381,4 @@ def logsumexp(
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     """Specialization of :func:`tlib.reduce` with ``op="logsumexp"``"""
-    raise NotImplementedError
     return reduce(description, tensor, op="logsumexp", mask=mask, keepdims=keepdims, cse=cse)

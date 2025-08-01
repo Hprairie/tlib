@@ -227,20 +227,20 @@ class TestReduceOps(BaseTritonTest):
         _kernel[(1,)](a, out, LENGHT=LENGTH)
         assert torch.allclose(out, out_ref, atol=2e-5, rtol=2e-5)
 
-    # @pytest.mark.unit
-    # @pytest.mark.parametrize("LENGTH", [16, 32, 64])
-    # @pytest.mark.parametrize("dtype_str", ["float32"])
-    # def test_reduce_logsumexp(self, LENGTH, dtype_str, device):
-    #     """Test logsumexp reduction operations."""
+    @pytest.mark.unit
+    @pytest.mark.parametrize("LENGTH", [16, 32, 64])
+    @pytest.mark.parametrize("dtype_str", ["float32"])
+    def test_reduce_logsumexp(self, LENGTH, dtype_str, device):
+        """Test logsumexp reduction operations."""
 
-    #     @triton.jit
-    #     def _kernel(x_ptr, o_ptr, LENGHT: tl.constexpr):
-    #         x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
-    #         x = tlib.logsumexp("a [b]", x)
-    #         tl.store(o_ptr + tl.arange(0, LENGHT), x)
+        @triton.jit
+        def _kernel(x_ptr, o_ptr, LENGHT: tl.constexpr):
+            x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
+            x = tlib.logsumexp("a [b]", x)
+            tl.store(o_ptr + tl.arange(0, LENGHT), x)
 
-    #     a = torch.ones((LENGTH, LENGTH), dtype=getattr(torch, dtype_str), device=device)
-    #     out_ref = torch.logsumexp(a, dim=1)
-    #     out = torch.zeros((LENGTH), dtype=getattr(torch, dtype_str), device=device)
-    #     _kernel[(1,)](a, out, LENGHT=LENGTH)
-    #     assert torch.allclose(out, out_ref, atol=2e-5, rtol=2e-5)
+        a = torch.ones((LENGTH, LENGTH), dtype=getattr(torch, dtype_str), device=device)
+        out_ref = torch.logsumexp(a, dim=1)
+        out = torch.zeros((LENGTH), dtype=getattr(torch, dtype_str), device=device)
+        _kernel[(1,)](a, out, LENGHT=LENGTH)
+        assert torch.allclose(out, out_ref, atol=2e-5, rtol=2e-5)
