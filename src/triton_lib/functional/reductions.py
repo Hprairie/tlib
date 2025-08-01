@@ -37,7 +37,10 @@ def mean(
         return total / tl.sum(mask, keep_dims=keep_dims, dtype=dtype)
     else:
         total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
-        return total / _count_shape_dims(input.shape[axis])
+        if tl.constexpr(axis is None):
+            return total / _count_shape_dims(input.shape[-1])
+        else:
+            return total / _count_shape_dims(input.shape[axis])
 
 
 @triton.jit
@@ -60,10 +63,14 @@ def var(
     else:
         norm = input - mean_val
         total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)
-        if return_mean:
-            return total / _count_shape_dims(input.shape[axis]), norm
+        if tl.constexpr(axis is None):
+            out = total / _count_shape_dims(input.shape[-1])
         else:
-            return total / _count_shape_dims(input.shape[axis])
+            out = total / _count_shape_dims(input.shape[axis])
+        if return_mean:
+            return our, norm
+        else:
+            return out
 
 
 @triton.jit
@@ -77,11 +84,11 @@ def std(
 ):
     if return_mean:
         _var, _mean = var(
-            input, axis=axis, mask=None, keep_dims=keep_dims, dtype=dtype, return_mean=return_mean
+            input, axis=axis, mask=mask, keep_dims=keep_dims, dtype=dtype, return_mean=return_mean
         )  # A little crude but oh well
         return tl.sqrt(_var), _mean
     else:
-        return tl.sqrt(var(input, axis=axis, mask=None, keep_dims=keep_dims, dtype=dtype))  # A little crude but oh well
+        return tl.sqrt(var(input, axis=axis, mask=mask, keep_dims=keep_dims, dtype=dtype))  # A little crude but oh well
 
 
 @triton.jit
@@ -129,7 +136,7 @@ def any(
     keep_dims: tl.constexpr = False,
 ):
     if tl.constexpr(mask is not None):
-        return tl.reduce(tl.where(mask, input != 0, False), axis=axis, combine_fn=_any_reduce, keep_dims=keep_dim)
+        return tl.reduce(tl.where(mask, input != 0, False), axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims)
     else:
         return tl.reduce(input != 0, axis=axis, combine_fn=_any_reduce, keep_dims=keep_dims)
 
@@ -186,9 +193,15 @@ def argmin(
     keep_dims: tl.constexpr = False,
 ):
     if tl.constexpr(mask is not None):
-        return tl.argmin(tl.where(mask, input, float("inf")), axis=axis, keep_dims=keep_dims)
+        if tl.constexpr(axis is None):
+            return tl.argmin(tl.where(mask, input, float("inf")), axis=-1, keep_dims=keep_dims)
+        else:
+            return tl.argmin(tl.where(mask, input, float("inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.argmin(input, axis=axis, keep_dims=keep_dims)
+        if tl.constexpr(axis is None):
+            return tl.argmin(input, axis=-1, keep_dims=keep_dims)
+        else:
+            return tl.argmin(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -199,9 +212,15 @@ def argmax(
     keep_dims: tl.constexpr = False,
 ):
     if tl.constexpr(mask is not None):
-        return tl.argmax(tl.where(mask, input, float("-inf")), axis=axis, keep_dims=keep_dims)
+        if tl.constexpr(axis is None):
+            return tl.argmax(tl.where(mask, input, float("-inf")), axis=-1, keep_dims=keep_dims)
+        else:
+            return tl.argmax(tl.where(mask, input, float("-inf")), axis=axis, keep_dims=keep_dims)
     else:
-        return tl.argmax(input, axis=axis, keep_dims=keep_dims)
+        if tl.constexpr(axis is None):
+            return tl.argmax(input, axis=-1, keep_dims=keep_dims)
+        else:
+            return tl.argmax(input, axis=axis, keep_dims=keep_dims)
 
 
 @triton.jit
@@ -213,10 +232,10 @@ def logsumexp(
 ):
     """If a mask is used, then unknown behaviour/values in masked values (i.e., index marked as false)"""
     if tl.constexpr(mask is not None):
-        input = tl.log(input)
+        input = tl.exp(input)
         input = tl.sum(tl.where(mask, input, 0), axis=axis, keep_dims=keep_dims)
-        return tl.exp(input)
+        return tl.log(input)
     else:
-        input = tl.log(input)
+        input = tl.exp(input)
         input = tl.sum(input, axis=axis, keep_dims=keep_dims)
-        return tl.exp(input)
+        return tl.log(input)
