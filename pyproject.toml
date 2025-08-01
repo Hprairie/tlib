@@ -12,6 +12,7 @@ dependencies = [
     "numpy>=2.3.1",
     "sympy>=1.14.0",
     "torch>=2.7.1",
+    "triton>=3.4.0",
 ]
 
 [project.optional-dependencies]
@@ -48,12 +49,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
     "unit: Unit tests",
-    "integration: Integration tests",
     "functional: Functional tests", 
-    "performance: Performance tests",
-    "slow: Slow tests",
-    "cuda: Tests requiring CUDA",
-    "triton: Tests requiring Triton",
 ]
 filterwarnings = [
     "error",
