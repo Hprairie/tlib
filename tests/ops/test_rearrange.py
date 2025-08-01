@@ -135,28 +135,6 @@ class TestRearrangeOps(BaseTritonTest):
         assert torch.allclose(out2, out2_ref, atol=1e-3, rtol=1e-3)
 
     @pytest.mark.unit
-    def test_rearrange_error_handling(self, device):
-        """Test error handling for invalid rearrange descriptions."""
-
-        @triton.jit
-        def _kernel_invalid_brackets():
-            x = tl.zeros((4, 4), dtype=tl.float32)
-            # This should raise an error due to brackets
-            x = tlib.rearrange("h w -> [h w]", x)
-
-        @triton.jit
-        def _kernel_mismatched_tensors():
-            x = tl.zeros((4, 4), dtype=tl.float32)
-            y = tl.zeros((4, 4), dtype=tl.float32)
-            # This should raise an error due to tensor count mismatch
-            x = tlib.rearrange("h w -> w h", (x, y))
-
-        # Note: These tests would need to be run in a way that captures compilation errors
-        # For now, we just verify the functions can be defined
-        assert _kernel_invalid_brackets is not None
-        assert _kernel_mismatched_tensors is not None
-
-    @pytest.mark.unit
     @pytest.mark.parametrize("B,H,W,C", [(1, 8, 8, 4)])
     @pytest.mark.parametrize("dtype_str", ["float32"])
     def test_rearrange_complex_transformation(self, B, H, W, C, dtype_str, device):
