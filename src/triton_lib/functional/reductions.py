@@ -3,11 +3,13 @@ import triton
 import triton.language as tl
 from triton.language import core
 
+from typing import Iterable
+
 
 # Reductions
 @tl.constexpr_function
 def _count_shape_dims(vals):
-    return builtins.sum(vals) if isinstance(vals, list) else vals
+    return builtins.sum(vals) if isinstance(vals, Iterable) else vals
 
 
 @triton.jit
@@ -37,8 +39,10 @@ def mean(
         return total / tl.sum(mask, keep_dims=keep_dims, dtype=dtype)
     else:
         total = tl.sum(input, axis=axis, keep_dims=keep_dims, dtype=dtype)
+        if tl.constexpr(isinstance(total, tl.tuple_type)):
+            total = total[0]
         if tl.constexpr(axis is None):
-            return total / _count_shape_dims(input.shape[-1])
+            return total / _count_shape_dims(input.shape)
         else:
             return total / _count_shape_dims(input.shape[axis])
 
@@ -64,7 +68,7 @@ def var(
         norm = input - mean_val
         total = tl.sum(norm * norm, axis=axis, keep_dims=keep_dims, dtype=dtype)
         if tl.constexpr(axis is None):
-            out = total / _count_shape_dims(input.shape[-1])
+            out = total / _count_shape_dims(input.shape)
         else:
             out = total / _count_shape_dims(input.shape[axis])
         if return_mean:
@@ -194,12 +198,12 @@ def argmin(
 ):
     if tl.constexpr(mask is not None):
         if tl.constexpr(axis is None):
-            return tl.argmin(tl.where(mask, input, float("inf")), axis=-1, keep_dims=keep_dims)
+            return tl.argmin(tl.where(mask, input, float("inf")).ravel(), axis=-1, keep_dims=keep_dims)
         else:
             return tl.argmin(tl.where(mask, input, float("inf")), axis=axis, keep_dims=keep_dims)
     else:
         if tl.constexpr(axis is None):
-            return tl.argmin(input, axis=-1, keep_dims=keep_dims)
+            return tl.argmin(input.ravel(), axis=-1, keep_dims=keep_dims)
         else:
             return tl.argmin(input, axis=axis, keep_dims=keep_dims)
 
@@ -213,12 +217,12 @@ def argmax(
 ):
     if tl.constexpr(mask is not None):
         if tl.constexpr(axis is None):
-            return tl.argmax(tl.where(mask, input, float("-inf")), axis=-1, keep_dims=keep_dims)
+            return tl.argmax(tl.where(mask, input, float("-inf")).ravel(), axis=0, keep_dims=keep_dims)
         else:
             return tl.argmax(tl.where(mask, input, float("-inf")), axis=axis, keep_dims=keep_dims)
     else:
         if tl.constexpr(axis is None):
-            return tl.argmax(input, axis=-1, keep_dims=keep_dims)
+            return tl.argmax(input.ravel(), axis=0, keep_dims=keep_dims)
         else:
             return tl.argmax(input, axis=axis, keep_dims=keep_dims)
 

@@ -13,12 +13,12 @@ def cumsum(
 ) -> tl.tensor:
     if tl.constexpr(mask is not None):
         if tl.constexpr(axis is None):
-            return tl.cumsum(tl.where(mask, input, 0), axis=-1, reverse=reverse)
+            return tl.cumsum(tl.where(mask, input, 0).ravel(), axis=-1, reverse=reverse)
         else:
             return tl.cumsum(tl.where(mask, input, 0), axis=axis, reverse=reverse)
     else:
         if tl.constexpr(axis is None):
-            return tl.cumsum(input, axis=-1, reverse=reverse)
+            return tl.cumsum(input.ravel(), axis=-1, reverse=reverse)
         else:
             return tl.cumsum(input, axis=axis, reverse=reverse)
 
@@ -32,12 +32,12 @@ def cumprod(
 ) -> tl.tensor:
     if tl.constexpr(mask is not None):
         if tl.constexpr(axis is None):
-            return tl.cumprod(tl.where(mask, input, 1), axis=-1, reverse=reverse)
+            return tl.cumprod(tl.where(mask, input, 1).ravel(), axis=-1, reverse=reverse)
         else:
             return tl.cumprod(tl.where(mask, input, 1), axis=axis, reverse=reverse)
     else:
         if tl.constexpr(axis is None):
-            return tl.cumprod(input, axis=-1, reverse=reverse)
+            return tl.cumprod(input.ravel(), axis=-1, reverse=reverse)
         else:
             return tl.cumprod(input, axis=axis, reverse=reverse)
 
