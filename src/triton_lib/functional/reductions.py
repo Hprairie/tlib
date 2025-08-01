@@ -68,7 +68,7 @@ def var(
         else:
             out = total / _count_shape_dims(input.shape[axis])
         if return_mean:
-            return our, norm
+            return out, norm
         else:
             return out
 

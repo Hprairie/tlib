@@ -12,9 +12,15 @@ def cumsum(
     reverse: tl.constexpr | None = None,
 ) -> tl.tensor:
     if tl.constexpr(mask is not None):
-        return tl.cumsum(tl.where(mask, input, 0), axis=axis, reverse=reverse)
+        if tl.constexpr(axis is None):
+            return tl.cumsum(tl.where(mask, input, 0), axis=-1, reverse=reverse)
+        else:
+            return tl.cumsum(tl.where(mask, input, 0), axis=axis, reverse=reverse)
     else:
-        return tl.cumsum(input, axis=axis, reverse=reverse)
+        if tl.constexpr(axis is None):
+            return tl.cumsum(input, axis=-1, reverse=reverse)
+        else:
+            return tl.cumsum(input, axis=axis, reverse=reverse)
 
 
 @triton.jit
@@ -25,9 +31,15 @@ def cumprod(
     reverse: tl.constexpr | None = None,
 ) -> tl.tensor:
     if tl.constexpr(mask is not None):
-        return tl.cumprod(tl.where(mask, input, 1), axis=axis, reverse=reverse)
+        if tl.constexpr(axis is None):
+            return tl.cumprod(tl.where(mask, input, 1), axis=-1, reverse=reverse)
+        else:
+            return tl.cumprod(tl.where(mask, input, 1), axis=axis, reverse=reverse)
     else:
-        return tl.cumprod(input, axis=axis, reverse=reverse)
+        if tl.constexpr(axis is None):
+            return tl.cumprod(input, axis=-1, reverse=reverse)
+        else:
+            return tl.cumprod(input, axis=axis, reverse=reverse)
 
 
 @triton.jit
@@ -35,7 +47,10 @@ def flip(
     input: tl.tensor,
     axis: tl.constexpr | None = None,
 ) -> tl.tensor:
-    return tl.flip(input, dim=axis)  # Why does triton have dim and not axis for this, so dumb
+    if tl.constexpr(axis is None):
+        return tl.flip(input, dim=-1)  # Why does triton have dim and not axis for this, so dumb
+    else:
+        return tl.flip(input, dim=axis)  # Why does triton have dim and not axis for this, so dumb
 
 
 @triton.jit
@@ -45,12 +60,11 @@ def softmax(
     mask: tl.tensor | None = None,
     eps: tl.constexpr = 1e-10,
 ) -> tl.tensor:
-    raise NotImplemented
     if tl.constexpr(mask is not None):
         # Can this be a single tl.where? Seem's like potentially unsafe and could create nan
-        _norm = input - tlf.max(input, axis, mask=mask)
+        _norm = input - tlf.max(input, axis=axis, mask=mask)
         _exp = tl.exp(_norm)
-        _denom = tlf.sum(_exp, axis, mask=mask)
+        _denom = tlf.sum(_exp, axis=axis, mask=mask)
         return _exp / (_denom)
     else:
         _norm = input - tlf.max(input, axis=axis, keep_dims=True)
@@ -60,7 +74,8 @@ def softmax(
 
 
 @triton.jit
-def log_softmax(input, axis=None, mask: tl.tensor | None = None) -> tl.tensor: ...
+def log_softmax(input, axis=None, mask: tl.tensor | None = None) -> tl.tensor:
+    return input - tlf.logsumexp(input, axis=axis, mask=mask, keep_dims=True)
 
 
 @triton.jit
