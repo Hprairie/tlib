@@ -14,6 +14,8 @@ def parse(
     cse: bool,
     parameters: dict,
 ) -> tuple[tl.constexpr, tl.constexpr]:
+    if parameters is None:
+        parameters = {}
     description, parameters = tlib.ops.util._clean_description(description, parameters)
     signature = tlib.expr.CallSignature(text=description, parameters=parameters)
 
