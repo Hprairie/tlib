@@ -28,7 +28,7 @@ def unary_stage3(exprs, tensor_in, op, kwargs, backend=None):
 @tl.constexpr_function
 def parse(description, tensor_shapes, cse=True):
     tensor_shapes = [tensor_shapes]
-    description, parameters = tlib.ops.util._clean_description(description)
+    description, parameters = tlib.ops.util._clean_description(description, None)
     signature = tlib.expr.CallSignature(text=description, parameters=parameters)
 
     op = tlib.expr.stage1.parse_op(description)

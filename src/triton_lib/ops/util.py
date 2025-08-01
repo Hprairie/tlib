@@ -230,25 +230,25 @@ def count_tensors(x, y, z):
     return len([v for v in [x, y, z] if v is not None])
 
 
-def _clean_description(description):
-    # Remove parameters that are not used in the description
-    if "|" in description:
-        split = description.split("|")
-        assert len(split) == 2, "Too many parameter brackets being passed to tlib."
-        description, parameters = split
-    else:
-        description, parameters = description, None
+def _clean_parameter_val(k, v):
+    if v == () or v == []:
+        return np.asarray(v, dtype=np.int64)
+    try:
+        v = np.asarray(v)
+    except Exception as e:
+        raise ValueError(f"Got invalid parameter {k}={v}") from e
+    if not np.issubdtype(v.dtype, np.integer):
+        raise ValueError(f"Got invalid parameter {k}={v}")
+    return v
 
+
+def _clean_description(description, parameters):
     axis_names = {
         axis.name
         for axis in tlib.expr.stage1.parse_op(description).all()
         if isinstance(axis, tlib.expr.stage1.NamedAxis)
     }
-    exprs = []
-    if parameters is not None:
-        exprs = [param.split("=") for param in parameters.split(",")]
-    # TODO: Check typing on this
-    parameters = {k: _clean_parameter(v) for k, v in exprs if k in axis_names}
+    parameters = {k: _clean_parameter_val(k, v) for k, v in parameters.items() if k in axis_names}
 
     return description, parameters
 

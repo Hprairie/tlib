@@ -24,3 +24,4 @@ from .binary import (
 )
 from .dot import dot
 from .vmap_with_axis import vmap_with_axis_stage3
+from .util import dict

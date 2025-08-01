@@ -12,8 +12,9 @@ def parse(
     description: str,
     tensor_shapes: tuple,
     cse: bool,
+    parameters: dict,
 ) -> tuple[tl.constexpr, tl.constexpr]:
-    description, parameters = tlib.ops.util._clean_description(description)
+    description, parameters = tlib.ops.util._clean_description(description, parameters)
     signature = tlib.expr.CallSignature(text=description, parameters=parameters)
 
     op = tlib.expr.stage1.parse_op(description)
@@ -88,12 +89,13 @@ def rearrange_stage3(out, tensors_in, backend=None):
 def rearrange(
     description: tl.constexpr,
     tensors,
+    parameters: tl.constexpr | None = None,
     cse: tl.constexpr = True,
 ) -> Union[tl.tensor, tuple[tl.tensor]]:
     if tl.constexpr(isinstance(tensors, tl.tensor)):
         tensors = (tensors,)
     tensor_shapes: tl.constexpr = tlib.ops.util.get_shapes(tensors)
-    out: tl.constexpr = parse(description, tensor_shapes, cse=cse)
+    out: tl.constexpr = parse(description, tensor_shapes, cse=cse, parameters=parameters)
     func: tl.constexpr = rearrange_stage3(out, tensors)
     out_tensors = func(*tensors)
     if tl.constexpr(len(out_tensors) == 1):
