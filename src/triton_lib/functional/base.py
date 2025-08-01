@@ -15,12 +15,12 @@ arange = tl.arange
 # Cat/stack
 @triton.jit
 def concatenate(tensors, axis: tl.constexpr | None = None) -> tl.tensor:
-    tl.static_assert(len(tensors) == 2)
-    tl.static_assert(len(tensors[0].shape) == 1, "Triton tl.cat is bad right now :(, has to be vectors")
-    return tl.cat(tensors[0], tensors[1], can_reorder=True)
+    raise NotImplementedError
 
 
-stack = tl.join
+@triton.jit
+def stack(tensors, axis: tl.constexpr | None = None) -> tl.tensor:
+    raise NotImplementedError
 
 
 # Elementwise
@@ -46,7 +46,7 @@ def true_divide(x, y):
 
 @triton.jit
 def floor_div(x, y):
-    return x // y
+    return tl.floor(x / y)
 
 
 @triton.jit

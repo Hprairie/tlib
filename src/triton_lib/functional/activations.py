@@ -18,6 +18,11 @@ def tanh(x):
 
 
 @triton.jit
+def sigmoid(x):
+    return tl.sigmoid(x)
+
+
+@triton.jit
 def gelu(x):
     M_SQRT1_2 = 0.70710678118654752440
     ALPHA = M_SQRT1_2
@@ -32,4 +37,4 @@ def gelu_tanh(x):
     KAPPA = 0.044715
     x_cube = x * x * x
     inner = BETA * (x + KAPPA * x_cube)
-    return 0.5 * x * (1.0 + _tanh(inner))
+    return 0.5 * x * (1.0 + tanh(inner))
