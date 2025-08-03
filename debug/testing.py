@@ -16,12 +16,14 @@ def my_kernel(
     o_ptr,
     LENGHT: tl.constexpr,
 ):
-    x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
+    x_ptrs = x_ptr + tlib.arange("a b", tlib.dict(a=LENGHT, b=LENGHT))
+    # x = tl.load(x_ptr + tl.arange(0, LENGHT)[:, None] * LENGHT + tl.arange(0, LENGHT)[None, :])
     # x = tl.load(x_ptr + tl.arange(0, LENGHT))
+    x = tl.load(x_ptrs)
     # x = tlib.add("a, b -> a b", (x, x))
-    # x = tlib.sort("a [b]", x, descending=True)
+    x = tlib.sort("a [b]", x, descending=True)
     # y = tlib.rearrange("a b -> b a", x)
-    o = tlib.rearrange("a (b c) -> a b c", x, tlib.dict(b=2, c=4))
+    # o = tlib.rearrange("a (b c) -> a b c", x, tlib.dict(b=2, c=4))
     # o = tlib.sum("a [b]", x)
     # o = tl.dot(x, y)
     # x = tlib.dot("a b, c b -> a c", (x, x))

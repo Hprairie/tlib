@@ -1,11 +1,6 @@
 import triton
 import triton.language as tl
 import tlib
-from . import util
-import numpy as np
-from functools import partial
-from typing import Callable, Union
-import numpy.typing as npt
 
 _any = any  # Is overwritten below
 

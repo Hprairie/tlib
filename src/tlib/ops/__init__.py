@@ -1,5 +1,6 @@
 from . import util
 from .rearrange import rearrange
+from .arange import arange
 from .reduce import reduce, sum, mean, var, std, prod, count_nonzero, any, all, max, min, argmax, argmin, logsumexp
 from .unary import unary, cumsum, cumprod, flip, softmax, sort, associative_scan
 from .binary import (
