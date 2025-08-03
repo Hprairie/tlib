@@ -65,7 +65,7 @@ def softmax(
         _norm = input - tlf.max(input, axis=axis, mask=mask)
         _exp = tl.exp(_norm)
         _denom = tlf.sum(_exp, axis=axis, mask=mask)
-        return _exp / (_denom)
+        return _exp / (_denom + eps)
     else:
         _norm = input - tlf.max(input, axis=axis, keep_dims=True)
         _exp = tl.exp(_norm)

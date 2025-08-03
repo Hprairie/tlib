@@ -243,6 +243,8 @@ def _clean_parameter_val(k, v):
 
 
 def _clean_description(description, parameters):
+    if parameters is None:
+        parameters = {}
     axis_names = {
         axis.name
         for axis in tlib.expr.stage1.parse_op(description).all()

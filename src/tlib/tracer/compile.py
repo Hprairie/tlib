@@ -3,8 +3,8 @@ from .tracer import *
 from .tensor import *
 from .optimize import optimize
 from functools import partial
-import os
 import tempfile
+import uuid
 
 
 class Variables:
@@ -178,7 +178,6 @@ class CodeObject:
             self.code = line + "\n" + self.code
 
         locals_globals = {definition.name: definition.value for definition in self.constants}
-        # import pdb; pdb.set_trace()
         # exec(self.code, locals_globals, locals_globals)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
             temp_file.write(self.code)
@@ -431,6 +430,7 @@ class CodeObject:
 
             # Define function body
             output_def = self.get_definition_of(x.output)
+            definition._code = f"func_{uuid.uuid4().hex[:8]}"
 
             block.code.append(f"import triton")
             block.code.append(f"@triton.jit")

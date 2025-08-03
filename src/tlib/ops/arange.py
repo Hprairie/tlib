@@ -9,8 +9,9 @@ import numpy.typing as npt
 
 
 @tl.constexpr_function
-@tlib.jit(trace=lambda t, c: lambda exprs_in, expr_out, backend=None, dtype="int32": c(exprs_in, expr_out, dtype=dtype))
-def arange_stage3(expr_in, expr_out, backend, dtype="int32"):
+@tlib.jit(trace=lambda t, c: lambda exprs, backend=None: c(exprs))
+def arange_stage3(exprs, backend=None):
+    expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
     if isinstance(backend, str):
         backend = tlib.backend.get(backend)
     for expr in expr_in.all():
@@ -42,7 +43,7 @@ def arange_stage3(expr_in, expr_out, backend, dtype="int32"):
 
     (tensor,), _ = tlib.rearrange_stage3(
         [axis.__deepcopy__() for axis in expr_in],
-        [backend.arange(axis.value, dtype=dtype) for axis in expr_in],
+        [backend.arange(axis.value) for axis in expr_in],
         [expr_out_flat_withconcat],
         backend=backend,
     )
