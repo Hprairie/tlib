@@ -192,8 +192,6 @@ class CodeObject:
             )
             self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
         finally:
-            # Clean up the temporary file
-            # os.unlink(temp_file_path)
             pass
         self.output = tlib.tree_util.tree_map(lambda name: locals_globals[name], self.names)
 
@@ -248,7 +246,7 @@ class CodeObject:
                 self.definitions[id(application.output)] = self.definitions[id(block.variables[name])]
             return
 
-        inline = None
+        inline = True
         if isinstance(application.op, MemberAccess):
             inline = True  # Always inline
             obj = self.get_definition_of(application.args[0]).code
@@ -299,6 +297,7 @@ class CodeObject:
 
             right_str = f"{obj}[{slices}]"
         else:
+            inline = True
             op = self.get_definition_of(application.op).code
             args = [self.get_definition_of(arg).code for arg in application.args] + [
                 f"{k}={self.get_definition_of(v).code}" for k, v in application.kwargs.items()

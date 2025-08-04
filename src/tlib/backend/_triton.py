@@ -29,6 +29,7 @@ def create():
         transpose = op.transpose(ttl.transpose)
         broadcast_to = op.broadcast_to(ttl.broadcast_to)
         arange = op.arange(ttl.arange)
+        expand_dims = op.expand_dims(ttl.expand_dims)
 
         stack = op.stack(ttl.stack)
         concatenate = op.concatenate(ttl.concatenate)

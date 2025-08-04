@@ -10,6 +10,15 @@ reshape = tl.reshape
 transpose = tl.trans
 broadcast_to = tl.broadcast_to
 arange = tl.arange
+expand_dims = tl.expand_dims
+
+
+@triton.jit
+def arange(
+    n: tl.constexpr,
+    stride: tl.constexpr = tl.constexpr(1),
+) -> tl.tensor:
+    return tl.arange(0, n) * stride
 
 
 # Cat/stack

@@ -70,10 +70,19 @@ class op:
 
         return einsum
 
+    def expand_dims(op: Tracer):  # type: ignore
+        @trace
+        def expand_dims(tensor, axis):
+            shape = list(tensor.shape)
+            shape.insert(axis, 1)
+            return apply(op, args=[tensor], kwargs={"axis": axis}, output=Tensor(shape))
+
+        return expand_dims
+
     def arange(op: Tracer):  # type: ignore
         @trace
-        def arange(n, dtype="int32"):
-            return apply(op, args=[n], kwargs={"dtype": dtype}, output=Tensor((n,)))
+        def arange(n, stride):
+            return apply(op, args=[n, stride], output=Tensor((n,)))
 
         return arange
 

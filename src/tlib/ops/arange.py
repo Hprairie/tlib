@@ -9,8 +9,8 @@ import numpy.typing as npt
 
 
 @tl.constexpr_function
-@tlib.jit(trace=lambda t, c: lambda exprs, backend=None: c(exprs))
-def arange_stage3(exprs, backend=None):
+@tlib.jit(trace=lambda t, c: lambda exprs, backend="triton": c(exprs))
+def arange_stage3(exprs, backend):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
     if isinstance(backend, str):
         backend = tlib.backend.get(backend)
@@ -41,29 +41,35 @@ def arange_stage3(exprs, backend=None):
     expr_out_flat_withconcat = tlib.expr.stage3.replace(expr_out_flat, replace)
     expr_out_flat_withconcat = tlib.expr.stage3.demark(expr_out_flat_withconcat)
 
-    (tensor,), _ = tlib.rearrange_stage3(
-        [axis.__deepcopy__() for axis in expr_in],
-        [backend.arange(axis.value) for axis in expr_in],
-        [expr_out_flat_withconcat],
-        backend=backend,
-    )
+    arange_tensors = []
+    for i, axis in enumerate(expr_in):
+        stride = 1
+        for j in range(i + 1, len(expr_in)):
+            stride *= expr_in[j].value
+        arange_tensors.append(backend.arange(axis.value, stride))
 
-    # Unflatten output expressions
-    (tensor,) = util.unflatten(
-        [expr_out_flat],
-        [
-            tensor,
-        ],
-        [expr_out],
-        backend=backend,
-    )
+    # Broadcast tensors across different axes and sum them
+    tensor = None
+    for i, arange_tensor in enumerate(arange_tensors):
+        # Use expand_dims to add dimensions at the correct positions
+        broadcasted_tensor = arange_tensor
+        for j in range(len(expr_in)):
+            if j != i:
+                broadcasted_tensor = backend.expand_dims(broadcasted_tensor, j if j < i else j)
 
+        if tensor is None:
+            tensor = broadcasted_tensor
+        else:
+            tensor = tensor + broadcasted_tensor
     return tensor
 
 
 @tl.constexpr_function
 def parse(description: str, parameters: dict, cse: bool):
     description, parameters = tlib.ops.util._clean_description(description, parameters)
+    assert "->" not in description, "tlib.arange should not specify an output expression"
+    assert "[" not in description and "]" not in description, "tlib.arange should not specify a application axis `[ ]`"
+    description = description + f" [{len(description.split(" "))}]"
 
     op = tlib.expr.stage1.parse_op(description)
 
@@ -116,5 +122,5 @@ def arange(
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     exprs: tl.constexpr = parse(description, parameters, cse=cse)
-    func: tl.constexpr = arange_stage3(exprs)
-    return func()[0]
+    func: tl.constexpr = arange_stage3(exprs, backend="triton")
+    return func()
