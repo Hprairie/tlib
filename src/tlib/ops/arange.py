@@ -51,12 +51,8 @@ def arange_stage3(exprs, backend):
     # Broadcast tensors across different axes and sum them
     tensor = None
     for i, arange_tensor in enumerate(arange_tensors):
-        # Use expand_dims to add dimensions at the correct positions
-        broadcasted_tensor = arange_tensor
-        for j in range(len(expr_in)):
-            if j != i:
-                broadcasted_tensor = backend.expand_dims(broadcasted_tensor, j if j < i else j)
-
+        axes_to_expand = tuple(j for j in range(len(expr_in)) if j != i)
+        broadcasted_tensor = backend.expand_dims(arange_tensor, axes_to_expand)
         if tensor is None:
             tensor = broadcasted_tensor
         else:

@@ -72,9 +72,13 @@ class op:
 
     def expand_dims(op: Tracer):  # type: ignore
         @trace
-        def expand_dims(tensor, axis):
+        def expand_dims(tensor, axis=0):
             shape = list(tensor.shape)
-            shape.insert(axis, 1)
+            if isinstance(axis, int):
+                shape.insert(axis, 1)
+            else:
+                for ax in sorted(axis):
+                    shape.insert(ax, 1)
             return apply(op, args=[tensor], kwargs={"axis": axis}, output=Tensor(shape))
 
         return expand_dims
