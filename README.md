@@ -98,3 +98,7 @@ This section will eventually be moved, but outlined are the current roadmap for 
 - [ ] Build a PyPi package
 - [ ] Create Documentation
 - [ ] Fix associative scan operation in `tlib`
+
+# References
+
+This package is partly built on [einx](https://github.com/fferflo/einx), whose copyright has been added into the project and added upon.
