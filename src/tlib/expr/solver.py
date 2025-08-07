@@ -150,10 +150,7 @@ class SolveExceptionNoSolution(SolveException):
     def __init__(self, message="", contradicting_variables=None):
         if contradicting_variables is None:
             contradicting_variables = []
-        message = (
-            message
-            + f"\nContradicting variables: {', '.join([str(v) for v in contradicting_variables])}"
-        )
+        message = message + f"\nContradicting variables: {', '.join([str(v) for v in contradicting_variables])}"
         super().__init__(message)
         self.contradicting_variables = contradicting_variables
         if not all(isinstance(v, Variable) for v in contradicting_variables):
@@ -170,13 +167,7 @@ def solve(equations):
     equations = [(to_term(t1), to_term(t2)) for t1, t2 in equations]
     equations = [(t1, t2) for t1, t2 in equations if t1 != t2]
     equations = list(set(equations))
-    variables = {
-        v.id: v
-        for equation in equations
-        for term in equation
-        for v in term
-        if isinstance(v, Variable)
-    }
+    variables = {v.id: v for equation in equations for term in equation for v in term if isinstance(v, Variable)}
 
     # ##### Find equivalence classes of variables to speed up sympy solver #####
     # Find constant definitions
@@ -193,9 +184,7 @@ def solve(equations):
                     f"Found contradictory input equation {t1.value} != {t2.value}",
                     [],
                 )
-    contradicting_variables = {
-        variables[variable_id] for variable_id, values in constants.items() if len(values) != 1
-    }
+    contradicting_variables = {variables[variable_id] for variable_id, values in constants.items() if len(values) != 1}
     if len(contradicting_variables) > 0:
         raise SolveExceptionNoSolution(
             "Found contradictory definitions for the same variable",
@@ -295,14 +284,10 @@ def solve(equations):
                 if len(solutions) == 0:
                     raise SolveExceptionNoSolution("Sympy returned no solutions")
                 elif len(solutions) > 1:
-                    raise SolveExceptionTooManySolutions(
-                        "Sympy returned multiple possible solutions"
-                    )
+                    raise SolveExceptionTooManySolutions("Sympy returned multiple possible solutions")
                 else:
                     solutions = next(iter(solutions))
-                    solutions = {
-                        str(k): int(v) for k, v in zip(variables, solutions) if v.is_number
-                    }
+                    solutions = {str(k): int(v) for k, v in zip(variables, solutions) if v.is_number}
             else:
                 raise AssertionError("Sympy returned unexpected result")
 

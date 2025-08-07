@@ -30,10 +30,7 @@ class Optimizer:
             )
         elif isinstance(node, Tracer):
             if isinstance(node.origin, Application):
-                if (
-                    get_signature(node) == "reshape"
-                    and get_signature(node.origin.tensor) == "reshape"
-                ):
+                if get_signature(node) == "reshape" and get_signature(node.origin.tensor) == "reshape":
                     # Merge consecutive reshape ops
                     shape = node.origin.shape
                     new_node = apply(
@@ -43,17 +40,11 @@ class Optimizer:
                         signature="reshape",
                     )
                     self.changed = True
-                elif (
-                    get_signature(node) == "reshape"
-                    and get_shape(node.origin.tensor) == node.origin.shape
-                ):
+                elif get_signature(node) == "reshape" and get_shape(node.origin.tensor) == node.origin.shape:
                     # Skip reshape op if tensor already has right shape
                     new_node = self(node.origin.tensor)
                     self.changed = True
-                elif (
-                    get_signature(node) == "broadcast_to"
-                    and get_shape(node.origin.tensor) == node.origin.shape
-                ):
+                elif get_signature(node) == "broadcast_to" and get_shape(node.origin.tensor) == node.origin.shape:
                     # Skip broadcast_to op if tensor already has right shape
                     new_node = self(node.origin.tensor)
                     self.changed = True
@@ -65,9 +56,7 @@ class Optimizer:
                     self.changed = True
                 else:
                     # Optimize only arguments
-                    new_output_nodes = tlib.tree_util.tree_map(
-                        lambda node: node.__copy__(), node.origin.output
-                    )
+                    new_output_nodes = tlib.tree_util.tree_map(lambda node: node.__copy__(), node.origin.output)
 
                     def store(new_node, node):
                         assert id(node) not in self.optimized_nodes

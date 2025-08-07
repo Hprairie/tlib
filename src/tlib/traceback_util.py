@@ -33,14 +33,10 @@ def _is_in_reraise():
 def _filter_tb(tb):
     tb_list = list(traceback.walk_tb(tb))
     first_excluded_idx = 0
-    while first_excluded_idx < len(tb_list) and include_frame(
-        tb_list[first_excluded_idx][0].f_code.co_filename
-    ):
+    while first_excluded_idx < len(tb_list) and include_frame(tb_list[first_excluded_idx][0].f_code.co_filename):
         first_excluded_idx += 1
     last_excluded_idx = len(tb_list) - 1
-    while last_excluded_idx >= 0 and include_frame(
-        tb_list[last_excluded_idx][0].f_code.co_filename
-    ):
+    while last_excluded_idx >= 0 and include_frame(tb_list[last_excluded_idx][0].f_code.co_filename):
         last_excluded_idx -= 1
 
     if first_excluded_idx <= last_excluded_idx:

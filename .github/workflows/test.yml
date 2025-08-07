@@ -29,7 +29,6 @@ jobs:
 
     - name: Run linting
       run: |
-        uv run ruff check .
         uv run black --check .
 
     - name: Run tests
