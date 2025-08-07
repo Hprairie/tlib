@@ -23,7 +23,6 @@ test = [
     "pytest-benchmark>=4.0.0",
 ]
 dev = [
-    "tlib[test]",
     "black>=24.0.0",
 ]
 
