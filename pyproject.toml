@@ -1,6 +1,6 @@
 [project]
 name = "triton-lib"
-version = "0.0.1"
+version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -13,3 +13,50 @@ dependencies = [
     "sympy>=1.14.0",
     "triton>=3.4.0",
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "torch>=2.8.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-benchmark>=4.0.0",
+]
+dev = [
+    "black>=24.0.0",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers", 
+    "--strict-config",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "functional: Functional tests", 
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+[tool.black]
+line-length = 120
+
+[tool.poetry]
+name = "triton-lib"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <your.email@example.com>"]
+packages = [{include = "tlib", from = "src"}]
