@@ -85,7 +85,14 @@ Furthermore, on my quest to improve readability, I strongly desired to expand on
 
 # Limitations
 
-As you might have noticed from the examples, there are some API differences between `tlib` and `einx`/`einops`.
+As you might have noticed from the examples, there are some API differences between `tlib` and `einx`/`einops`. First, when passing multiple tensors, say to `tlib.rearrange`, we need to wrap them in a tuple object. 
+
+```python
+o = rearrange("a b c, d e f -> a c b, d f e", x, y)
+o = tlib.rearrange("a b c, d e f -> a c b, d f e", (x, y))
+```
+
+Additionally, dictionaries aren't supported in triton, thus I have created a wrapper: `tlib.dict`, which functions like a dictionary, but is a `tl.constexpr`.
 
 
 # Misc
