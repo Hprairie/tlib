@@ -9,8 +9,12 @@ import numpy.typing as npt
 
 
 @tl.constexpr_function
-@tlib.jit(trace=lambda t, c: lambda exprs, backend="triton": c(exprs))
-def arange_stage3(exprs, backend):
+@tlib.jit(
+    trace=lambda t, c: lambda exprs, strides=None, backend="triton": c(
+        exprs, tuple([t(arg) for arg in strides]) if strides is not None else None
+    )
+)
+def arange_stage3(exprs, strides, backend):
     expr_in, expr_out = tlib.ops.util._unwrap_triton_constexpr(*exprs)
     if isinstance(backend, str):
         backend = tlib.backend.get(backend)
@@ -42,11 +46,15 @@ def arange_stage3(exprs, backend):
     expr_out_flat_withconcat = tlib.expr.stage3.demark(expr_out_flat_withconcat)
 
     arange_tensors = []
-    for i, axis in enumerate(expr_in):
-        stride = 1
-        for j in range(i + 1, len(expr_in)):
-            stride *= expr_in[j].value
-        arange_tensors.append(backend.arange(axis.value, stride))
+    if strides is None:
+        for i, axis in enumerate(expr_in):
+            stride = 1
+            for j in range(i + 1, len(expr_in)):
+                stride *= expr_in[j].value
+            arange_tensors.append(backend.arange(axis.value, stride))
+    else:
+        for i, axis in enumerate(expr_in):
+            arange_tensors.append(backend.arange(axis.value, strides[i]))
 
     # Broadcast tensors across different axes and sum them
     tensor = None
@@ -115,8 +123,13 @@ def parse(description: str, parameters: dict, cse: bool):
 def arange(
     description: tl.constexpr,
     parameters: tl.constexpr | None = None,
+    strides: tl.tuple | None = None,
     cse: tl.constexpr = True,
 ) -> tl.tensor:
     exprs: tl.constexpr = parse(description, parameters, cse=cse)
-    func: tl.constexpr = arange_stage3(exprs, backend="triton")
-    return func()
+    if tl.constexpr(strides is not None):
+        func: tl.constexpr = arange_stage3(exprs, strides, backend="triton")
+        return func(*strides)
+    else:
+        func: tl.constexpr = arange_stage3(exprs, backend="triton")
+        return func()
